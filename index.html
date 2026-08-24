@@ -93,6 +93,28 @@
   .backup-actions button { padding: 7px 13px; font-size: 12.5px; }
   /* Ocultas a pedido de Martin (sigue funcionando por detrás; borrar esta regla para mostrarlas de nuevo). */
   .backup-bar, .sync-bar { display: none !important; }
+    /* Boton flotante para descargar backup con la barra oculta. */
+    .backup-fab {
+          position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 500;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--border, #DCE3E8);
+      background: var(--accent);
+      color: #fff;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      opacity: 0.55;
+      transition: opacity 0.15s;
+    }
+  .backup-fab:hover { opacity: 1; }
   .sync-bar {
     display: flex;
     align-items: center;
@@ -508,6 +530,7 @@
 <body>
 
 <div class="topbar"></div>
+  <button class="backup-fab" onclick="exportBackup()" title="Descargar backup (.json)">⬇</button>
 <div class="wrap">
   <header>
     <h1>Foco del día</h1>
