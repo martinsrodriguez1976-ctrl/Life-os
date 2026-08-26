@@ -93,27 +93,27 @@
   .backup-actions button { padding: 7px 13px; font-size: 12.5px; }
   /* Ocultas a pedido de Martin (sigue funcionando por detrás; borrar esta regla para mostrarlas de nuevo). */
   .backup-bar, .sync-bar { display: none !important; }
-    /* Boton flotante para descargar backup con la barra oculta. */
-    .backup-fab {
-          position: fixed;
-      right: 18px;
-      bottom: 18px;
-      z-index: 500;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      border: 1px solid var(--border, #DCE3E8);
-      background: var(--accent);
-      color: #fff;
-      font-size: 17px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-      opacity: 0.55;
-      transition: opacity 0.15s;
-    }
+  /* Botón flotante mínimo para poder seguir descargando el backup con la barra oculta. */
+  .backup-fab {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 500;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border, #DCE3E8);
+    background: var(--accent);
+    color: #fff;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    opacity: 0.55;
+    transition: opacity 0.15s;
+  }
   .backup-fab:hover { opacity: 1; }
   .sync-bar {
     display: flex;
@@ -287,6 +287,17 @@
   .due-ok { background: var(--green-soft); color: var(--green); }
   .due-soon { background: var(--amber-soft); color: var(--amber); }
   .due-late { background: var(--red-soft); color: var(--red); }
+
+  /* Globo de estado (Agenda: tareas y proyectos). Siempre a la izquierda de la fecha. */
+  .title-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .estado-badge {
+    font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px;
+    white-space: nowrap; cursor: pointer; border: none; font-family: 'Inter', sans-serif;
+  }
+  .estado-badge:hover { opacity: 0.8; }
+  .estado-no_iniciado { background: var(--red-soft); color: var(--red); }
+  .estado-en_curso { background: var(--amber-soft); color: var(--amber); }
+  .estado-finalizado { background: var(--green-soft); color: var(--green); }
 
   .subtasks { margin-top: 10px; padding-left: 32px; display: flex; flex-direction: column; gap: 8px; }
   .subtask-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
@@ -491,6 +502,8 @@
   nav.subnav button { border:none; background:transparent; padding:8px 14px; border-radius:10px; font-family:'Inter',sans-serif; font-weight:600; font-size:13px; color:var(--text-secondary); cursor:pointer; white-space:nowrap; }
   nav.subnav button:hover:not(.active) { color:var(--text-primary); }
   nav.subnav button.active { background:var(--text-primary); color:#fff; }
+  nav.subnav button.subnav-history-toggle { border:1px dashed var(--border); color:var(--text-tertiary); background:transparent; }
+  nav.subnav button.subnav-history-toggle:hover { color:var(--text-secondary); }
   .subpanel { display:none; }
   .subpanel.active { display:block; animation: fadeIn .2s ease; }
   .lead-text { color:var(--text-secondary); font-size:13.5px; margin:0 0 18px; }
@@ -530,7 +543,7 @@
 <body>
 
 <div class="topbar"></div>
-  <button class="backup-fab" onclick="exportBackup()" title="Descargar backup (.json)">⬇</button>
+<button class="backup-fab" onclick="exportBackup()" title="Descargar backup (.json)">⬇</button>
 <div class="wrap">
   <header>
     <h1>Foco del día</h1>
@@ -724,20 +737,10 @@
   <!-- REUNIÓN CON JAVIER -->
   <section class="panel" id="panel-reunionjavier">
 
-    <div class="agenda-section" id="sec-javier-prioridades">
-      <div class="section-head">
-        <h3 style="font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:600;margin:0;">Prioridades para la reunión</h3>
-      </div>
-      <div class="priority-add-row">
-        <input type="text" id="jp_new" placeholder="Nueva prioridad..." onkeydown="if(event.key==='Enter'){addJavierPriority();}">
-        <button class="btn-add" onclick="addJavierPriority()">+ Agregar</button>
-      </div>
-      <div class="priority-list" id="javierPriorityList"></div>
-    </div>
-
     <div class="agenda-section" id="sec-javier-weekly">
       <div class="section-head">
         <h3 style="font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:600;margin:0;">Seguimiento semanal</h3>
+        <button class="btn-ghost" onclick="sendJavierWeekByMail()" title="Arma el mail con todo lo de la semana seleccionada y lo abre en Outlook">📧 Enviar por mail</button>
       </div>
       <nav class="subnav" id="javierWeekTabs" role="tablist"></nav>
       <div id="javierWeekTables"></div>
@@ -1207,6 +1210,23 @@ if (!data.events) data.events = [];
 if (!data.meetingLog) data.meetingLog = [];
 if (!data.javierWeekly) data.javierWeekly = {};
 if (!data.javierPriorities) data.javierPriorities = [];
+// Migración: globo de estado (No iniciado / En curso / Finalizado) en tareas y proyectos de Agenda.
+// Las tareas/proyectos que ya existían no tenían este campo: se infiere a partir de "done".
+(data.tasks || []).forEach(t => { if (!t.estado) t.estado = t.done ? 'finalizado' : 'no_iniciado'; });
+(data.projects || []).forEach(p => { if (!p.estado) p.estado = p.done ? 'finalizado' : 'no_iniciado'; });
+// Migración: "Prioridades para la reunión" pasa a guardarse por semana (junto con Riesgos/Necesito/Avances),
+// para que tengan historial como el resto de los apartados. Las prioridades viejas (lista única, sin semana)
+// se mueven una sola vez a la semana actual; no se pierde nada.
+if (data.javierPriorities.length && !data.javierPrioritiesMigrated){
+  const curKey = weekKey(new Date());
+  if (!data.javierWeekly[curKey]) data.javierWeekly[curKey] = { prioridades: [], riesgos: [], necesito: [], avances: [] };
+  if (!data.javierWeekly[curKey].prioridades) data.javierWeekly[curKey].prioridades = [];
+  data.javierWeekly[curKey].prioridades.push(...data.javierPriorities);
+  data.javierPrioritiesMigrated = true;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+// Cualquier semana que ya existiera de antes (Riesgos/Necesito/Avances) también necesita su lista de prioridades.
+Object.values(data.javierWeekly).forEach(b => { if (!b.prioridades) b.prioridades = []; });
 if (!data.personalTasks) data.personalTasks = [];
 if (!data.lifeAreas) data.lifeAreas = DEFAULT_LIFE_AREAS();
 if (!data.lifeAreaNotes) data.lifeAreaNotes = DEFAULT_LIFE_AREA_NOTES();
@@ -1274,6 +1294,7 @@ function ensureTaskRecord(taskDef){
       projectId: '',
       due: taskDef.due || '',
       done: false,
+      estado: 'no_iniciado',
       subtasks: (taskDef.subtasks || []).map(s => ({ id: cid(), text: s.text, due: s.due || '', done: s.done || false })),
       showSubtasks: true
     });
@@ -1302,6 +1323,7 @@ function ensureProjectRecord(projectDef){
       description: projectDef.description || '',
       due: projectDef.due || '',
       done: false,
+      estado: 'no_iniciado',
       subtasks: (projectDef.subtasks || []).map(s => ({ id: cid(), text: s.text, due: s.due || '', done: s.done || false })),
       showSubtasks: true
     });
@@ -1675,7 +1697,7 @@ document.querySelectorAll('nav.tabs > button').forEach(btn => {
     document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
     if (btn.dataset.tab === 'actividades') renderCalendars();
     if (btn.dataset.tab === 'colaboradores'){ renderCollabSidebar(); renderCollabContent(); }
-    if (btn.dataset.tab === 'reunionjavier'){ renderJavierPriorities(); renderJavierWeekly(); }
+    if (btn.dataset.tab === 'reunionjavier'){ renderJavierWeekly(); }
     if (btn.dataset.tab === 'indicadores'){ renderIndicadores(); }
     if (btn.dataset.tab === 'vida'){ renderVidaAll(); }
   });
@@ -1987,6 +2009,33 @@ function subtaskDueClass(dueStr){
   return due < today ? 'due-late' : 'due-ok';
 }
 
+// ---- Globo de estado (Agenda: tareas y proyectos) ----
+const ESTADO_ORDER = ['no_iniciado', 'en_curso', 'finalizado'];
+const ESTADO_LABELS = { no_iniciado: 'No iniciado', en_curso: 'En curso', finalizado: 'Finalizado' };
+function estadoLabel(estado){ return ESTADO_LABELS[estado] || ESTADO_LABELS.no_iniciado; }
+function nextEstado(estado){
+  const idx = ESTADO_ORDER.indexOf(estado || 'no_iniciado');
+  return ESTADO_ORDER[(idx + 1) % ESTADO_ORDER.length];
+}
+function cycleTaskEstado(id){
+  const t = data.tasks.find(x => x.id === id);
+  if (!t) return;
+  t.estado = nextEstado(t.estado);
+  t.done = t.estado === 'finalizado';
+  logActivity(`Tarea "${t.title}": estado → ${estadoLabel(t.estado)}`);
+  save();
+  renderTasks();
+}
+function cycleProjectEstado(id){
+  const p = data.projects.find(x => x.id === id);
+  if (!p) return;
+  p.estado = nextEstado(p.estado);
+  p.done = p.estado === 'finalizado';
+  logActivity(`Proyecto "${p.title}": estado → ${estadoLabel(p.estado)}`);
+  save();
+  renderProjects();
+}
+
 // ---- Projects ----
 function saveProject(){
   const title = document.getElementById('p_title').value.trim();
@@ -2019,7 +2068,7 @@ function saveProject(){
     Object.assign(p, fields);
     logActivity(`Proyecto editado: "${title}"`);
   } else {
-    data.projects.push({ id: cid(), ...fields, done: false, showSubtasks: true });
+    data.projects.push({ id: cid(), ...fields, done: false, estado: 'no_iniciado', showSubtasks: true });
     logActivity(`Nuevo proyecto: "${title}"${subtasks.length ? ` (${subtasks.length} subtareas)` : ''}`);
   }
   editingProjectId = null;
@@ -2040,6 +2089,7 @@ function deleteProject(id){
 function toggleProjectDone(id){
   const p = data.projects.find(x => x.id === id);
   p.done = !p.done;
+  p.estado = p.done ? 'finalizado' : 'en_curso';
   logActivity(`${p.done ? 'Proyecto completado' : 'Proyecto reabierto'}: "${p.title}"`);
   save();
   renderProjects();
@@ -2136,7 +2186,10 @@ function renderProjectItem(p){
         <div class="task-body">
           <div class="task-title-row">
             <div class="task-title ${p.done ? 'done' : ''}">${escapeHtml(p.title)}</div>
-            ${p.due ? `<span class="subtask-due-badge ${subtaskDueClass(p.due)}">${fmtDate(p.due)}</span>` : ''}
+            <div class="title-badges">
+              <span class="estado-badge estado-${p.estado || 'no_iniciado'}" onclick="cycleProjectEstado('${p.id}')" title="Click para cambiar el estado">${estadoLabel(p.estado)}</span>
+              ${p.due ? `<span class="subtask-due-badge ${subtaskDueClass(p.due)}">${fmtDate(p.due)}</span>` : ''}
+            </div>
           </div>
           ${p.description ? `<div class="task-desc ${p.done ? 'done' : ''}">${escapeHtml(p.description)}</div>` : ''}
           <div class="task-tags">
@@ -2241,7 +2294,7 @@ function saveTask(){
     Object.assign(t, fields);
     logActivity(`Tarea editada: "${title}"`);
   } else {
-    data.tasks.push({ id: cid(), ...fields, done: false, showSubtasks: true });
+    data.tasks.push({ id: cid(), ...fields, done: false, estado: 'no_iniciado', showSubtasks: true });
     logActivity(`Nueva tarea: "${title}"${subtasks.length ? ` (${subtasks.length} subtareas)` : ''}`);
   }
   save();
@@ -2252,6 +2305,7 @@ function saveTask(){
 function toggleTask(id){
   const t = data.tasks.find(x => x.id === id);
   t.done = !t.done;
+  t.estado = t.done ? 'finalizado' : 'en_curso';
   logActivity(`${t.done ? 'Tarea completada' : 'Tarea reabierta'}: "${t.title}"`);
   save();
   renderTasks();
@@ -2373,7 +2427,10 @@ function renderTaskItem(t){
         <div class="task-body">
           <div class="task-title-row">
             <div class="task-title ${t.done ? 'done' : ''}">${escapeHtml(t.title)}</div>
-            ${t.due ? `<span class="subtask-due-badge ${subtaskDueClass(t.due)}">${fmtDate(t.due)}</span>` : ''}
+            <div class="title-badges">
+              <span class="estado-badge estado-${t.estado || 'no_iniciado'}" onclick="cycleTaskEstado('${t.id}')" title="Click para cambiar el estado">${estadoLabel(t.estado)}</span>
+              ${t.due ? `<span class="subtask-due-badge ${subtaskDueClass(t.due)}">${fmtDate(t.due)}</span>` : ''}
+            </div>
           </div>
           ${t.description ? `<div class="task-desc ${t.done ? 'done' : ''}">${escapeHtml(t.description)}</div>` : ''}
           <div class="task-tags">
@@ -2890,14 +2947,17 @@ function weekLabel(dateObj){
   return `Semana del ${fmt(start)} al ${fmt(end)}`;
 }
 // ---- Seguimiento semanal (Reunión con Javier) ----
-// Una solapa por cada semana que queda del año en curso, calculada en vivo con new Date().
-// Cada semana tiene 3 tablas libres: riesgos, necesito, avances. Fila = {id, semaforo, avance, estado}.
+// Una solapa por cada semana que queda del año en curso, calculada en vivo con new Date(),
+// más las semanas anteriores que ya tengan datos cargados (ver "Semanas anteriores" más abajo).
+// Cada semana guarda 4 bloques: prioridades, riesgos, necesito, avances. Nada se pisa al cambiar de semana:
+// cada semana tiene su propio balde en data.javierWeekly, así que lo de la semana pasada queda guardado.
 const JAVIER_WEEKLY_SECTIONS = [
   { key: 'riesgos', label: 'Riesgos y bloqueos' },
   { key: 'necesito', label: 'Necesito de vos' },
   { key: 'avances', label: 'Avances destacados' }
 ];
 let selectedJavierWeekKey = null;
+let javierPastWeeksOpen = false;
 
 function getRemainingJavierWeekKeys(){
   const today = new Date();
@@ -2912,38 +2972,58 @@ function getRemainingJavierWeekKeys(){
   return keys;
 }
 
-// ---- Prioridades para la reunión con Javier ----
-function addJavierPriority(){
-  const input = document.getElementById('jp_new');
-  const texto = input.value.trim();
-  if (!texto) return;
-  data.javierPriorities.push({ id: cid(), texto, hecho: false });
-  input.value = '';
+// Semanas anteriores a la actual que ya tienen algo cargado (prioridades, riesgos, necesito o avances).
+// Se guardan igual que las demás en data.javierWeekly; esto sólo controla qué se ve por default.
+function getPastJavierWeekKeysWithData(){
+  const curKey = weekKey(new Date());
+  return Object.keys(data.javierWeekly)
+    .filter(k => k < curKey)
+    .filter(k => {
+      const b = data.javierWeekly[k];
+      return (b.prioridades && b.prioridades.length) || (b.riesgos && b.riesgos.length) ||
+             (b.necesito && b.necesito.length) || (b.avances && b.avances.length);
+    })
+    .sort((a, b) => b.localeCompare(a));
+}
+
+function toggleJavierPastWeeks(){
+  javierPastWeeksOpen = !javierPastWeeksOpen;
+  renderJavierWeeklyTabs();
+}
+
+// ---- Prioridades para la reunión con Javier (una lista por semana, dentro de Seguimiento semanal) ----
+function addJavierWeeklyPriority(){
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  bucket.prioridades.push({ id: cid(), texto: '', hecho: false });
   save();
-  renderJavierPriorities();
+  renderJavierWeeklyTables();
 }
 
 function deleteJavierPriority(id){
-  data.javierPriorities = data.javierPriorities.filter(p => p.id !== id);
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  bucket.prioridades = bucket.prioridades.filter(p => p.id !== id);
   save();
-  renderJavierPriorities();
+  renderJavierWeeklyTables();
 }
 
 function toggleJavierPriorityDone(id){
-  const p = data.javierPriorities.find(x => x.id === id);
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const p = bucket.prioridades.find(x => x.id === id);
   if (p) p.hecho = !p.hecho;
   save();
-  renderJavierPriorities();
+  renderJavierWeeklyTables();
 }
 
 function updateJavierPriorityText(id, val){
-  const p = data.javierPriorities.find(x => x.id === id);
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const p = bucket.prioridades.find(x => x.id === id);
   if (p) p.texto = val;
   save();
 }
 
 function moveJavierPriorityTo(id, toIdx){
-  const arr = data.javierPriorities;
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const arr = bucket.prioridades;
   const fromIdx = arr.findIndex(p => p.id === id);
   if (fromIdx === -1) return;
   toIdx = Math.max(0, Math.min(arr.length - 1, toIdx));
@@ -2951,12 +3031,12 @@ function moveJavierPriorityTo(id, toIdx){
   const [moved] = arr.splice(fromIdx, 1);
   arr.splice(toIdx, 0, moved);
   save();
-  renderJavierPriorities();
+  renderJavierWeeklyTables();
 }
 
 function setJavierPriorityRank(id, val){
   const n = parseInt(val, 10);
-  if (isNaN(n)) { renderJavierPriorities(); return; }
+  if (isNaN(n)) { renderJavierWeeklyTables(); return; }
   moveJavierPriorityTo(id, n - 1);
 }
 
@@ -2986,7 +3066,8 @@ function handlePriorityDrop(ev, targetId){
   const id = draggedPriorityId || ev.dataTransfer.getData('text/plain');
   draggedPriorityId = null;
   if (!id || id === targetId) return;
-  const toIdx = data.javierPriorities.findIndex(p => p.id === targetId);
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const toIdx = bucket.prioridades.findIndex(p => p.id === targetId);
   if (toIdx === -1) return;
   moveJavierPriorityTo(id, toIdx);
 }
@@ -2997,15 +3078,12 @@ function handlePriorityDragEnd(ev){
   draggedPriorityId = null;
 }
 
-function renderJavierPriorities(){
-  const el = document.getElementById('javierPriorityList');
-  if (!el) return;
-  if (!data.javierPriorities.length){
-    el.innerHTML = '<div class="empty-state">Todavía no cargaste prioridades para esta reunión.</div>';
-    return;
-  }
-  const total = data.javierPriorities.length;
-  el.innerHTML = data.javierPriorities.map((p, i) => `
+// Devuelve el HTML de la tarjeta de Prioridades, con el mismo formato de tarjeta que Riesgos/Necesito/Avances.
+function renderJavierWeeklyPrioridadesCard(){
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const list = bucket.prioridades;
+  const total = list.length;
+  const rowsHtml = list.length ? list.map((p, i) => `
     <div class="priority-row ${p.hecho ? 'done' : ''}"
          draggable="true"
          ondragstart="handlePriorityDragStart(event,'${p.id}')"
@@ -3017,12 +3095,21 @@ function renderJavierPriorities(){
       <input class="priority-rank" type="number" min="1" max="${total}" value="${i+1}"
              onchange="setJavierPriorityRank('${p.id}', this.value)" title="Escribí un número para mover la prioridad a esa posición">
       <div class="task-check ${p.hecho ? 'done' : ''}" onclick="toggleJavierPriorityDone('${p.id}')">${p.hecho ? '✓' : ''}</div>
-      <input type="text" value="${escapeAttr(p.texto)}" onchange="updateJavierPriorityText('${p.id}', this.value)">
+      <input type="text" placeholder="Prioridad..." value="${escapeAttr(p.texto)}" onchange="updateJavierPriorityText('${p.id}', this.value)">
       <div class="priority-actions">
         <button class="icon-btn" onclick="deleteJavierPriority('${p.id}')" title="Eliminar">✕</button>
       </div>
     </div>
-  `).join('');
+  `).join('') : `<div class="empty-state" style="padding:18px 8px;">Todavía no cargaste prioridades para esta semana.</div>`;
+  return `
+    <div class="task-form-card">
+      <div class="section-head" style="margin-bottom:6px;">
+        <h4 style="font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:600;margin:0;">Prioridades para la reunión</h4>
+        <button class="btn-ghost" onclick="addJavierWeeklyPriority()">+ Agregar</button>
+      </div>
+      <div class="priority-list">${rowsHtml}</div>
+    </div>
+  `;
 }
 
 function getISOWeekNumber(dateObj){
@@ -3040,8 +3127,9 @@ function formatJavierWeekTabLabel(key){
 
 function ensureJavierWeekBucket(key){
   if (!data.javierWeekly[key]){
-    data.javierWeekly[key] = { riesgos: [], necesito: [], avances: [] };
+    data.javierWeekly[key] = { prioridades: [], riesgos: [], necesito: [], avances: [] };
   }
+  if (!data.javierWeekly[key].prioridades) data.javierWeekly[key].prioridades = [];
   return data.javierWeekly[key];
 }
 
@@ -3105,12 +3193,23 @@ function renderJavierWeeklyTabs(){
   const nav = document.getElementById('javierWeekTabs');
   if (!nav) return;
   const keys = getRemainingJavierWeekKeys();
-  if (!selectedJavierWeekKey || !keys.includes(selectedJavierWeekKey)){
+  const pastKeys = getPastJavierWeekKeysWithData();
+  if (!selectedJavierWeekKey || (!keys.includes(selectedJavierWeekKey) && !pastKeys.includes(selectedJavierWeekKey))){
     selectedJavierWeekKey = keys[0];
   }
-  nav.innerHTML = keys.map(key => `
+  let html = '';
+  if (pastKeys.length){
+    html += `<button class="subnav-history-toggle" onclick="toggleJavierPastWeeks()">${javierPastWeeksOpen ? '📂' : '📁'} Semanas anteriores (${pastKeys.length})</button>`;
+    if (javierPastWeeksOpen){
+      html += pastKeys.map(key => `
+        <button class="${key === selectedJavierWeekKey ? 'active' : ''}" onclick="selectJavierWeek('${key}')">${formatJavierWeekTabLabel(key)}</button>
+      `).join('');
+    }
+  }
+  html += keys.map(key => `
     <button class="${key === selectedJavierWeekKey ? 'active' : ''}" onclick="selectJavierWeek('${key}')">${formatJavierWeekTabLabel(key)}</button>
   `).join('');
+  nav.innerHTML = html;
 }
 
 function renderJavierWeeklySectionTable(section, label){
@@ -3147,13 +3246,51 @@ function renderJavierWeeklySectionTable(section, label){
 function renderJavierWeeklyTables(){
   const el = document.getElementById('javierWeekTables');
   if (!el) return;
-  el.innerHTML = JAVIER_WEEKLY_SECTIONS.map(s => renderJavierWeeklySectionTable(s.key, s.label)).join('');
+  el.innerHTML = renderJavierWeeklyPrioridadesCard() +
+    JAVIER_WEEKLY_SECTIONS.map(s => renderJavierWeeklySectionTable(s.key, s.label)).join('');
   el.querySelectorAll('textarea.weekly-estado-input').forEach(autoGrowTextarea);
 }
 
 function renderJavierWeekly(){
   renderJavierWeeklyTabs();
   renderJavierWeeklyTables();
+}
+
+// ---- Enviar por mail (Outlook Web, vía Chrome) todo lo de la semana seleccionada ----
+function sendJavierWeekByMail(){
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const weekLbl = formatJavierWeekTabLabel(selectedJavierWeekKey);
+  const semaforoTxt = { rojo: '🔴', amarillo: '🟡', verde: '🟢' };
+
+  let body = `Reunión con Javier — ${weekLbl}\n\n`;
+
+  body += `PRIORIDADES PARA LA REUNIÓN\n`;
+  if (bucket.prioridades.length){
+    bucket.prioridades.forEach((p, i) => {
+      body += `${i + 1}. ${p.hecho ? '[Hecho] ' : ''}${p.texto || '(sin texto)'}\n`;
+    });
+  } else {
+    body += `(sin prioridades cargadas)\n`;
+  }
+  body += `\n`;
+
+  JAVIER_WEEKLY_SECTIONS.forEach(s => {
+    body += `${s.label.toUpperCase()}\n`;
+    const rows = bucket[s.key];
+    if (rows.length){
+      rows.forEach(r => {
+        body += `${semaforoTxt[r.semaforo] || '⚪'} ${r.avance || '(sin avance)'}\n`;
+        if (r.estado && r.estado.trim()) body += `   ${r.estado.replace(/\n/g, '\n   ')}\n`;
+      });
+    } else {
+      body += `(sin datos)\n`;
+    }
+    body += `\n`;
+  });
+
+  const subject = `Reunión con Javier — ${weekLbl}`;
+  const url = 'https://outlook.office.com/mail/deeplink/compose?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  window.open(url, '_blank');
 }
 
 // ---- Coach ----
@@ -3918,7 +4055,6 @@ renderIndicadores();
 selectedCollabId = data.collaborators.length ? data.collaborators[0].id : null;
 renderCollabSidebar();
 renderCollabContent();
-renderJavierPriorities();
 renderJavierWeekly();
 renderCoachHistory();
 initCalendarState();
