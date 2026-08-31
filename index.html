@@ -532,6 +532,21 @@
     font-family:'Inter',sans-serif; font-size:12.5px; background:var(--bg);
     resize:none; overflow:hidden; line-height:1.5; display:block; min-height:26px;
   }
+  /* Reunión con Javier: filas en formato "espejo" del mail (semáforo + avance arriba, estado indentado debajo) */
+  .weekly-mail-rows { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+  .weekly-mail-row { border:1px solid var(--border); border-radius:8px; padding:8px 10px 10px; }
+  .weekly-mail-row-head { display:flex; align-items:center; gap:8px; }
+  .weekly-mail-row-head input[type=text] {
+    flex:1; border:1px solid var(--border); border-radius:6px; padding:5px 7px;
+    font-family:'Inter',sans-serif; font-size:12.5px; background:var(--bg); margin-bottom:0; font-weight:600;
+  }
+  textarea.weekly-estado-input {
+    width:calc(100% - 19px); margin-left:19px; margin-top:6px;
+    border:1px solid var(--border); border-radius:6px; padding:5px 7px;
+    font-family:'Inter',sans-serif; font-size:12.5px; background:var(--bg);
+    resize:none; overflow:hidden; line-height:1.5; display:block; min-height:26px;
+  }
+  .priority-num { font-size:12.5px; font-weight:600; color:var(--text-secondary); flex-shrink:0; width:18px; text-align:right; }
   .check-list { list-style:none; margin:0; padding:0; }
   .check-list li { display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px dashed var(--border); font-size:13px; }
   .check-list li:last-child { border-bottom:none; }
@@ -636,9 +651,6 @@
           <select id="t_project"><option value="">Sin proyecto</option></select>
           <input type="date" id="t_due">
         </div>
-        <span class="subtask-builder-label">Subtareas (opcional)</span>
-        <div id="t_subtasks_builder"></div>
-        <button type="button" class="btn-ghost" onclick="addSubtaskBuilderRow()">+ Agregar subtarea</button>
         <div class="task-form-footer">
           <button class="btn-secondary" onclick="closeTaskForm()">Cancelar</button>
           <button class="btn-add" id="taskFormSaveBtn" onclick="saveTask()">Agregar tarea</button>
@@ -1919,29 +1931,6 @@ function openMetricModal(id){
   openModal('metricModal');
 }
 
-// ---- Inline subtask builder (task creation/edición, directamente en la hoja) ----
-let subtaskBuilderCount = 0;
-function addSubtaskBuilderRow(prefill){
-  const container = document.getElementById('t_subtasks_builder');
-  const idx = subtaskBuilderCount++;
-  const row = document.createElement('div');
-  row.className = 'subtask-builder-row';
-  row.id = 'sb_row_' + idx;
-  if (prefill){
-    row.dataset.subId = prefill.id;
-    row.dataset.done = prefill.done ? '1' : '0';
-  }
-  row.innerHTML = `
-    <input type="text" id="sb_text_${idx}" placeholder="Subtarea..." value="${prefill ? escapeAttr(prefill.text) : ''}">
-    <input type="date" id="sb_due_${idx}" value="${prefill && prefill.due ? prefill.due : ''}">
-    <button type="button" class="icon-btn" onclick="removeSubtaskBuilderRow(${idx})" title="Quitar">✕</button>
-  `;
-  container.appendChild(row);
-}
-function removeSubtaskBuilderRow(idx){
-  const row = document.getElementById('sb_row_' + idx);
-  if (row) row.remove();
-}
 function escapeAttr(str){
   return String(str).replace(/"/g, '&quot;');
 }
@@ -1950,9 +1939,6 @@ function resetTaskForm(){
   document.getElementById('t_desc').value = '';
   document.getElementById('t_due').value = '';
   document.getElementById('t_project').value = '';
-  document.getElementById('t_subtasks_builder').innerHTML = '';
-  subtaskBuilderCount = 0;
-  addSubtaskBuilderRow();
 }
 
 let editingTaskId = null;
@@ -1981,10 +1967,6 @@ function openTaskFormForEdit(id){
   document.getElementById('t_desc').value = t.description || '';
   document.getElementById('t_due').value = t.due || '';
   document.getElementById('t_project').value = t.projectId || '';
-  document.getElementById('t_subtasks_builder').innerHTML = '';
-  subtaskBuilderCount = 0;
-  t.subtasks.forEach(s => addSubtaskBuilderRow(s));
-  if (t.subtasks.length === 0) addSubtaskBuilderRow();
   document.getElementById('taskFormSaveBtn').textContent = 'Guardar cambios';
   document.getElementById('taskFormCard').style.display = 'block';
   document.getElementById('taskFormCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2266,27 +2248,11 @@ function saveTask(){
   const title = document.getElementById('t_title').value.trim();
   if (!title) return;
 
-  const subtasks = [];
-  document.querySelectorAll('#t_subtasks_builder .subtask-builder-row').forEach(row => {
-    const textInput = row.querySelector('input[type="text"]');
-    const dueInput = row.querySelector('input[type="date"]');
-    const text = textInput.value.trim();
-    if (text) {
-      subtasks.push({
-        id: row.dataset.subId || cid(),
-        text,
-        done: row.dataset.done === '1',
-        due: dueInput.value || ''
-      });
-    }
-  });
-
   const fields = {
     title,
     description: document.getElementById('t_desc').value.trim(),
     projectId: document.getElementById('t_project').value,
-    due: document.getElementById('t_due').value,
-    subtasks
+    due: document.getElementById('t_due').value
   };
 
   if (editingTaskId){
@@ -2294,8 +2260,8 @@ function saveTask(){
     Object.assign(t, fields);
     logActivity(`Tarea editada: "${title}"`);
   } else {
-    data.tasks.push({ id: cid(), ...fields, done: false, estado: 'no_iniciado', showSubtasks: true });
-    logActivity(`Nueva tarea: "${title}"${subtasks.length ? ` (${subtasks.length} subtareas)` : ''}`);
+    data.tasks.push({ id: cid(), ...fields, subtasks: [], done: false, estado: 'no_iniciado' });
+    logActivity(`Nueva tarea: "${title}"`);
   }
   save();
   closeTaskForm();
@@ -2319,71 +2285,6 @@ function deleteTask(id){
   renderTasks();
   renderProjects();
 }
-function toggleSubtaskView(id){
-  const t = data.tasks.find(x => x.id === id);
-  t.showSubtasks = !t.showSubtasks;
-  save();
-  renderTasks();
-  renderProjects();
-}
-function addSubtaskInline(taskId){
-  const t = data.tasks.find(x => x.id === taskId);
-  const newSub = { id: cid(), text: '', done: false, due: '' };
-  t.subtasks.push(newSub);
-  t.showSubtasks = true;
-  editingSubtask = { taskId, subId: newSub.id };
-  save();
-  renderTasks();
-  renderProjects();
-}
-function toggleSubtask(taskId, subId){
-  const t = data.tasks.find(x => x.id === taskId);
-  const s = t.subtasks.find(x => x.id === subId);
-  s.done = !s.done;
-  save();
-  renderTasks();
-  renderProjects();
-}
-function deleteSubtask(taskId, subId){
-  const t = data.tasks.find(x => x.id === taskId);
-  t.subtasks = t.subtasks.filter(s => s.id !== subId);
-  save();
-  renderTasks();
-  renderProjects();
-}
-let editingSubtask = null;
-function startEditSubtask(taskId, subId){
-  editingSubtask = { taskId, subId };
-  renderTasks();
-  renderProjects();
-}
-function cancelEditSubtask(){
-  if (editingSubtask){
-    const t = data.tasks.find(x => x.id === editingSubtask.taskId);
-    const s = t && t.subtasks.find(x => x.id === editingSubtask.subId);
-    if (s && !s.text.trim()) t.subtasks = t.subtasks.filter(x => x.id !== s.id);
-  }
-  editingSubtask = null;
-  save();
-  renderTasks();
-  renderProjects();
-}
-function saveSubtaskEdit(taskId, subId){
-  const t = data.tasks.find(x => x.id === taskId);
-  const s = t.subtasks.find(x => x.id === subId);
-  const newText = document.getElementById('edit_sub_text_' + subId).value.trim();
-  const newDue = document.getElementById('edit_sub_due_' + subId).value;
-  if (!newText){
-    t.subtasks = t.subtasks.filter(x => x.id !== subId);
-  } else {
-    s.text = newText;
-    s.due = newDue || '';
-  }
-  editingSubtask = null;
-  save();
-  renderTasks();
-  renderProjects();
-}
 function dueStatus(dueStr){
   if (!dueStr) return null;
   const due = new Date(dueStr + 'T00:00:00');
@@ -2395,30 +2296,6 @@ function dueStatus(dueStr){
 }
 function renderTaskItem(t){
   const proj = data.projects.find(p => p.id === t.projectId);
-  const due = dueStatus(t.due);
-  const activeSubs = t.subtasks.filter(s => !s.done).sort((a,b) => (a.due || '9999-12-31').localeCompare(b.due || '9999-12-31'));
-  const doneSubs = t.subtasks.filter(s => s.done);
-
-  const renderSub = (s) => {
-    const isEditing = editingSubtask && editingSubtask.taskId === t.id && editingSubtask.subId === s.id;
-    if (isEditing) {
-      return `
-      <div class="subtask-row">
-        <input type="text" id="edit_sub_text_${s.id}" value="${escapeAttr(s.text)}" style="flex:1;padding:4px 8px;border-radius:6px;border:1px solid var(--border);font-size:12.5px;">
-        <input type="date" id="edit_sub_due_${s.id}" value="${s.due || ''}" style="padding:4px 6px;border-radius:6px;border:1px solid var(--border);font-size:12px;">
-        <button class="subtask-del" onclick="saveSubtaskEdit('${t.id}','${s.id}')" title="Guardar">✓</button>
-        <button class="subtask-del" onclick="cancelEditSubtask()" title="Cancelar">✕</button>
-      </div>`;
-    }
-    return `
-    <div class="subtask-row">
-      <div class="subtask-check ${s.done ? 'done' : ''}" onclick="toggleSubtask('${t.id}','${s.id}')">${s.done ? '✓' : ''}</div>
-      <div class="subtask-text ${s.done ? 'done' : ''}">${escapeHtml(s.text)}</div>
-      ${s.due ? `<span class="subtask-due-badge ${subtaskDueClass(s.due)}">${fmtDate(s.due)}</span>` : ''}
-      <button class="subtask-del" onclick="startEditSubtask('${t.id}','${s.id}')" title="Editar">✎</button>
-      <button class="subtask-del" onclick="deleteSubtask('${t.id}','${s.id}')" title="Eliminar">✕</button>
-    </div>`;
-  };
 
   return `
     <div class="task-item">
@@ -2433,31 +2310,12 @@ function renderTaskItem(t){
             </div>
           </div>
           ${t.description ? `<div class="task-desc ${t.done ? 'done' : ''}">${escapeHtml(t.description)}</div>` : ''}
-          <div class="task-tags">
-            ${proj ? `<span class="tag tag-proj">${escapeHtml(proj.name)}</span>` : ''}
-            ${t.subtasks.length ? `<span class="tag tag-proj">${doneSubs.length}/${t.subtasks.length} subtareas</span>` : ''}
-          </div>
-          ${t.showSubtasks ? `
-            <div class="subtasks">
-              ${activeSubs.map(renderSub).join('')}
-              ${doneSubs.length ? `<button class="subtask-folder-toggle" onclick="toggleTaskSubtaskArchive('${t.id}')">${t.showDoneSubtasks ? '📂' : '📁'} Completadas (${doneSubs.length})</button>` : ''}
-              ${t.showDoneSubtasks ? doneSubs.map(renderSub).join('') : ''}
-            </div>
-          ` : ''}
-          <button class="toggle-subtasks" onclick="toggleSubtaskView('${t.id}')">${t.showSubtasks ? 'Ocultar subtareas' : 'Ver subtareas'}</button>
+          ${proj ? `<div class="task-tags"><span class="tag tag-proj">${escapeHtml(proj.name)}</span></div>` : ''}
         </div>
-        <button class="icon-btn task-del" onclick="addSubtaskInline('${t.id}')" title="Agregar subtarea">+</button>
         <button class="icon-btn task-del" onclick="openTaskFormForEdit('${t.id}')" title="Editar">✎</button>
         <button class="icon-btn task-del" onclick="deleteTask('${t.id}')" title="Eliminar">✕</button>
       </div>
     </div>`;
-}
-function toggleTaskSubtaskArchive(taskId){
-  const t = data.tasks.find(x => x.id === taskId);
-  t.showDoneSubtasks = !t.showDoneSubtasks;
-  save();
-  renderTasks();
-  renderProjects();
 }
 
 let tasksArchiveOpen = false;
@@ -3104,7 +2962,7 @@ function renderJavierWeeklyPrioridadesCard(){
   return `
     <div class="task-form-card">
       <div class="section-head" style="margin-bottom:6px;">
-        <h4 style="font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:600;margin:0;">Prioridades para la reunión</h4>
+        <h4 style="font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:600;margin:0;">PRIORIDADES PARA LA REUNIÓN</h4>
         <button class="btn-ghost" onclick="addJavierWeeklyPriority()">+ Agregar</button>
       </div>
       <div class="priority-list">${rowsHtml}</div>
@@ -3212,33 +3070,31 @@ function renderJavierWeeklyTabs(){
   nav.innerHTML = html;
 }
 
+// Formato de fila "espejo" del mail: 🔴/🟡/🟢 + avance arriba, estado indentado debajo (igual a sendJavierWeekByMail).
 function renderJavierWeeklySectionTable(section, label){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const rows = bucket[section];
   const rowsHtml = rows.length ? rows.map(r => `
-    <tr>
-      <td style="width:34px;text-align:center;">
+    <div class="weekly-mail-row">
+      <div class="weekly-mail-row-head">
         <span class="semaforo-dot semaforo-${r.semaforo}" style="cursor:pointer;" onclick="cycleJavierWeeklySemaforo('${section}','${r.id}')" title="Click para cambiar el semáforo"></span>
-      </td>
-      <td><input type="text" value="${escapeAttr(r.avance)}" placeholder="Avance..." onchange="updateJavierWeeklyField('${section}','${r.id}','avance',this.value)"></td>
-      <td><textarea class="weekly-estado-input" rows="1" placeholder="Estado / detalle..."
+        <input type="text" value="${escapeAttr(r.avance)}" placeholder="Avance..." onchange="updateJavierWeeklyField('${section}','${r.id}','avance',this.value)">
+        <button class="icon-btn" onclick="deleteJavierWeeklyRow('${section}','${r.id}')">✕</button>
+      </div>
+      <textarea class="weekly-estado-input" rows="1" placeholder="Estado / detalle..."
             onchange="updateJavierWeeklyField('${section}','${r.id}','estado',this.value)"
             oninput="autoGrowTextarea(this)"
             onkeydown="handleWeeklyEstadoEnter(event,'${section}','${r.id}',this)"
-          >${escapeHtml(r.estado)}</textarea></td>
-      <td style="width:30px;"><button class="icon-btn" onclick="deleteJavierWeeklyRow('${section}','${r.id}')">✕</button></td>
-    </tr>
-  `).join('') : `<tr><td colspan="4" class="empty-state" style="border:none;">Sin filas todavía.</td></tr>`;
+          >${escapeHtml(r.estado)}</textarea>
+    </div>
+  `).join('') : `<div class="empty-state" style="padding:18px 8px;">(sin datos)</div>`;
   return `
     <div class="task-form-card">
       <div class="section-head" style="margin-bottom:6px;">
-        <h4 style="font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:600;margin:0;">${label}</h4>
+        <h4 style="font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:600;margin:0;">${label.toUpperCase()}</h4>
         <button class="btn-ghost" onclick="addJavierWeeklyRow('${section}')">+ Agregar fila</button>
       </div>
-      <table class="simple-table">
-        <tr><th></th><th>Avance</th><th>Estado</th><th></th></tr>
-        ${rowsHtml}
-      </table>
+      <div class="weekly-mail-rows">${rowsHtml}</div>
     </div>
   `;
 }
@@ -4046,7 +3902,6 @@ document.querySelectorAll('#panel-vida nav.subnav > button').forEach(btn => {
 
 // ---- Init ----
 document.getElementById('coachQuestion').textContent = currentQuestion;
-addSubtaskBuilderRow();
 populateTaskProjSelects();
 renderProjects();
 renderTasks();
