@@ -1225,7 +1225,10 @@ if (!data.javierPriorities) data.javierPriorities = [];
 // Migración: globo de estado (No iniciado / En curso / Finalizado) en tareas y proyectos de Agenda.
 // Las tareas/proyectos que ya existían no tenían este campo: se infiere a partir de "done".
 (data.tasks || []).forEach(t => { if (!t.estado) t.estado = t.done ? 'finalizado' : 'no_iniciado'; });
-(data.projects || []).forEach(p => { if (!p.estado) p.estado = p.done ? 'finalizado' : 'no_iniciado'; });
+(data.projects || []).forEach(p => {
+  if (!p.estado) p.estado = p.done ? 'finalizado' : 'no_iniciado';
+  (p.subtasks || []).forEach(s => { if (!s.estado) s.estado = s.done ? 'finalizado' : 'no_iniciado'; });
+});
 // Migración: "Prioridades para la reunión" pasa a guardarse por semana (junto con Riesgos/Necesito/Avances),
 // para que tengan historial como el resto de los apartados. Las prioridades viejas (lista única, sin semana)
 // se mueven una sola vez a la semana actual; no se pierde nada.
@@ -1336,7 +1339,7 @@ function ensureProjectRecord(projectDef){
       due: projectDef.due || '',
       done: false,
       estado: 'no_iniciado',
-      subtasks: (projectDef.subtasks || []).map(s => ({ id: cid(), text: s.text, due: s.due || '', done: s.done || false })),
+      subtasks: (projectDef.subtasks || []).map(s => ({ id: cid(), text: s.text, due: s.due || '', done: s.done || false, estado: s.done ? 'finalizado' : 'no_iniciado' })),
       showSubtasks: true
     });
   }
@@ -1733,6 +1736,7 @@ function addProjectSubtaskBuilderRow(prefill){
   if (prefill){
     row.dataset.subId = prefill.id;
     row.dataset.done = prefill.done ? '1' : '0';
+    row.dataset.estado = prefill.estado || (prefill.done ? 'finalizado' : 'no_iniciado');
   }
   row.innerHTML = `
     <input type="text" id="psb_text_${idx}" placeholder="Subtarea..." value="${prefill ? escapeAttr(prefill.text) : ''}">
@@ -2029,11 +2033,13 @@ function saveProject(){
     const dueInput = row.querySelector('input[type="date"]');
     const text = textInput.value.trim();
     if (text) {
+      const done = row.dataset.done === '1';
       subtasks.push({
         id: row.dataset.subId || cid(),
         text,
-        done: row.dataset.done === '1',
-        due: dueInput.value || ''
+        done,
+        due: dueInput.value || '',
+        estado: row.dataset.estado || (done ? 'finalizado' : 'no_iniciado')
       });
     }
   });
@@ -2084,10 +2090,20 @@ function toggleProjectSubtaskView(id){
 }
 function addProjectSubtaskInline(projectId){
   const p = data.projects.find(x => x.id === projectId);
-  const newSub = { id: cid(), text: '', done: false, due: '' };
+  const newSub = { id: cid(), text: '', done: false, due: '', estado: 'no_iniciado' };
   p.subtasks.push(newSub);
   p.showSubtasks = true;
   editingProjectSubtask = { projectId, subId: newSub.id };
+  save();
+  renderProjects();
+}
+function cycleProjectSubtaskEstado(projectId, subId){
+  const p = data.projects.find(x => x.id === projectId);
+  const s = p && p.subtasks.find(x => x.id === subId);
+  if (!s) return;
+  s.estado = nextEstado(s.estado);
+  s.done = s.estado === 'finalizado';
+  logActivity(`Subtarea "${s.text}" (${p.title}): estado → ${estadoLabel(s.estado)}`);
   save();
   renderProjects();
 }
@@ -2095,6 +2111,7 @@ function toggleProjectSubtask(projectId, subId){
   const p = data.projects.find(x => x.id === projectId);
   const s = p.subtasks.find(x => x.id === subId);
   s.done = !s.done;
+  s.estado = s.done ? 'finalizado' : 'en_curso';
   save();
   renderProjects();
 }
@@ -2155,6 +2172,7 @@ function renderProjectItem(p){
     <div class="subtask-row">
       <div class="subtask-check ${s.done ? 'done' : ''}" onclick="toggleProjectSubtask('${p.id}','${s.id}')">${s.done ? '✓' : ''}</div>
       <div class="subtask-text ${s.done ? 'done' : ''}">${escapeHtml(s.text)}</div>
+      <span class="estado-badge estado-${s.estado || 'no_iniciado'}" onclick="cycleProjectSubtaskEstado('${p.id}','${s.id}')" title="Click para cambiar el estado">${estadoLabel(s.estado)}</span>
       ${s.due ? `<span class="subtask-due-badge ${subtaskDueClass(s.due)}">${fmtDate(s.due)}</span>` : ''}
       <button class="subtask-del" onclick="startEditProjectSubtask('${p.id}','${s.id}')" title="Editar">✎</button>
       <button class="subtask-del" onclick="deleteProjectSubtask('${p.id}','${s.id}')" title="Eliminar">✕</button>
