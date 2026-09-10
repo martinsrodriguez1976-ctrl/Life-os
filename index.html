@@ -3003,10 +3003,28 @@ function formatJavierWeekTabLabel(key){
 
 function ensureJavierWeekBucket(key){
   if (!data.javierWeekly[key]){
-    data.javierWeekly[key] = { prioridades: [], riesgos: [], necesito: [], avances: [] };
+    data.javierWeekly[key] = buildJavierWeekBucketFromPrevious(key);
   }
   if (!data.javierWeekly[key].prioridades) data.javierWeekly[key].prioridades = [];
   return data.javierWeekly[key];
+}
+// Al crear una semana nueva, hereda solo lo que quedó pendiente de la semana anterior con datos
+// (prioridades no marcadas como hechas; riesgos/necesito/avances con semáforo distinto de verde).
+// Lo ya resuelto no se copia. Las filas heredadas son copias con id nuevo: quedan 100% editables
+// en la semana nueva y no tocan el historial de la semana de origen.
+function buildJavierWeekBucketFromPrevious(key){
+  const empty = { prioridades: [], riesgos: [], necesito: [], avances: [] };
+  const priorKeys = Object.keys(data.javierWeekly).filter(k => k < key).sort();
+  const priorKey = priorKeys[priorKeys.length - 1];
+  if (!priorKey) return empty;
+  const prior = data.javierWeekly[priorKey];
+  const carry = (r) => ({ ...r, id: cid() });
+  return {
+    prioridades: (prior.prioridades || []).filter(p => !p.hecho).map(carry),
+    riesgos: (prior.riesgos || []).filter(r => r.semaforo !== 'verde').map(carry),
+    necesito: (prior.necesito || []).filter(r => r.semaforo !== 'verde').map(carry),
+    avances: (prior.avances || []).filter(r => r.semaforo !== 'verde').map(carry)
+  };
 }
 
 function selectJavierWeek(key){
