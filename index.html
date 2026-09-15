@@ -752,7 +752,7 @@
     <div class="agenda-section" id="sec-javier-weekly">
       <div class="section-head">
         <h3 style="font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:600;margin:0;">Seguimiento semanal</h3>
-        <button class="btn-ghost" onclick="sendJavierWeekByMail()" title="Arma el mail con todo lo de la semana seleccionada y lo abre en Outlook">📧 Enviar por mail</button>
+        <button class="btn-ghost" onclick="sendJavierWeekToOneNote()" title="Copia el resumen de la semana y abre la sección de OneNote para pegarlo">📓 Enviar a OneNote</button>
       </div>
       <nav class="subnav" id="javierWeekTabs" role="tablist"></nav>
       <div id="javierWeekTables"></div>
@@ -3106,7 +3106,7 @@ function renderJavierWeeklyTabs(){
   nav.innerHTML = html;
 }
 
-// Formato de fila "espejo" del mail: 🔴/🟡/🟢 + avance arriba, estado indentado debajo (igual a sendJavierWeekByMail).
+// Formato de fila "espejo": 🔴/🟡/🟢 + avance arriba, estado indentado debajo (igual a sendJavierWeekToOneNote).
 function renderJavierWeeklySectionTable(section, label){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const rows = bucket[section];
@@ -3149,7 +3149,7 @@ function renderJavierWeekly(){
 }
 
 // ---- Enviar por mail (Outlook Web, vía Chrome) todo lo de la semana seleccionada ----
-function sendJavierWeekByMail(){
+function sendJavierWeekToOneNote(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const weekLbl = formatJavierWeekTabLabel(selectedJavierWeekKey);
   const semaforoTxt = { rojo: '🔴', amarillo: '🟡', verde: '🟢' };
@@ -3180,9 +3180,17 @@ function sendJavierWeekByMail(){
     body += `\n`;
   });
 
-  const subject = `Reunión con Javier — ${weekLbl}`;
-  const url = 'https://outlook.office.com/mail/deeplink/compose?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
-  window.open(url, '_blank');
+  const oneNoteUrl = 'https://refineriadelcentrosa-my.sharepoint.com/personal/jjuszczyk_rdcindustrial_com/_layouts/15/Doc.aspx?sourcedoc={6a41a9b0-d198-407f-b4c3-e92405c6935a}&action=edit&wd=target%282026.one%7Ce5417073-7a1e-4cde-a0f5-53113782dada%2F%29&wdorigin=NavigationUrl';
+
+  window.open(oneNoteUrl, '_blank');
+
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(body)
+      .then(() => showToast('Copiado. Pegalo (Ctrl+V) en la página de esta semana en OneNote.'))
+      .catch(() => showToast('No se pudo copiar automático. Copiá el texto manualmente.'));
+  } else {
+    showToast('Este navegador no permite copiar automático. Copiá el texto manualmente.');
+  }
 }
 
 // ---- Coach ----
