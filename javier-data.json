@@ -1,61 +1,61 @@
 {
-  "weekKey": "2026-09-14",
-  "weekLabel": "Semana 38",
-  "publishedAt": "2026-09-17T12:37:53.999Z",
+  "weekKey": "2026-09-07",
+  "weekLabel": "Semana 37",
+  "publishedAt": "2026-09-17T12:55:59.327Z",
   "prioridades": [
     {
-      "id": "id_j6kx55w9",
+      "id": "id_26rj37sr",
       "texto": "Vaciiado de PT de deposito LL",
-      "hecho": false
+      "hecho": true
     },
     {
-      "id": "id_aew2zkgl",
+      "id": "id_f8dydsff",
       "texto": "Avanzar con desarrollo deposito picking",
       "hecho": false
     },
     {
-      "id": "id_tqcabysd",
+      "id": "id_b8zelh3k",
       "texto": "Segmentacion de clientes y Punto de carga",
       "hecho": false
     },
     {
-      "id": "id_j35mh9xu",
+      "id": "id_tg72w277",
       "texto": "Previsdion de demanda",
       "hecho": false
     },
     {
-      "id": "id_ugki6dp0",
+      "id": "id_ikw7537i",
       "texto": "Vencidos LL y AMC",
       "hecho": false
     }
   ],
   "riesgos": [
     {
-      "id": "id_jfmobt81",
+      "id": "id_jpih34ne",
       "semaforo": "amarillo",
       "avance": "COT",
-      "estado": "\n• Base interior subida\n• Raurell esta actualizando CP de capital para subir\n• 7100 sigue sin funcionar"
+      "estado": "• Base interior subida\n• Raurell esta actualizando CP de capital para subir\n• 7100 sigue sin funcionar. Como solucion paliativa realiza con el camion ppio. "
     },
     {
-      "id": "id_atnk664x",
+      "id": "id_852twk20",
       "semaforo": "amarillo",
       "avance": "Americold",
       "estado": "• Confirmado. Venta a Axis. "
     },
     {
-      "id": "id_xlca7onr",
+      "id": "id_zurtis5v",
       "semaforo": "amarillo",
       "avance": "Nuevo deposito de Picking",
       "estado": "• DR y LA, quisieron reunirse con Maya. \n• Pretenden dimensionar considerando que el cubo funcionara. Voy a seguir con mi plan. (Si no van a sumar...que se corran..jejeje)"
     },
     {
-      "id": "id_n7jw3o5s",
+      "id": "id_dq5e0i4o",
       "semaforo": "amarillo",
       "avance": "Lavadero BUE",
-      "estado": "• Denunciado en ambiente. Estamos buscando alternativas. \n• Se solicito a CB y RV posibilidad de activacion lavadero graba"
+      "estado": "• Denunciado en ambiente. Estamos buscando alternativas. Solicitud a Bracamonte y a Vidal, para reactivar proyecto lavadero en Graba.\n• Campana: 400 dol. \n• Milo: 500 dol. Entregan bines con producto remanente o lo compran. "
     },
     {
-      "id": "id_4ytw7nic",
+      "id": "id_kmgipzdk",
       "semaforo": "amarillo",
       "avance": "Imputaciones erroneas de presupuesto",
       "estado": "• Siguen imputando repuestos de cubo.  "
@@ -63,11 +63,108 @@
   ],
   "necesito": [
     {
-      "id": "id_7xfh3558",
+      "id": "id_e85gke04",
       "semaforo": "rojo",
       "avance": "Sistemas",
-      "estado": "• IFLOW: Avanzar con Apis de interacción de sistemas"
+      "estado": "• IFLOW: Avanzar con Apis de interacción de sistemas\n• Consolidado para colectoras: Rediseño de proceso."
+    },
+    {
+      "id": "id_d94as3lk",
+      "semaforo": "verde",
+      "avance": "Salida LL",
+      "estado": "• Equipo logística a casa de Sabrina\n• Almuerzo?"
+    },
+    {
+      "id": "id_9qghxdv5",
+      "semaforo": "rojo",
+      "avance": "Definicion de monitoreo de autoelevadores. ",
+      "estado": "• Vamos a seguir pagando?"
+    },
+    {
+      "id": "id_x34608e7",
+      "semaforo": "verde",
+      "avance": "Validar iniciativa en Siro",
+      "estado": "• Validacion de reparto COR"
     }
   ],
-  "avances": []
+  "avances": [
+    {
+      "id": "id_rjehbagp",
+      "semaforo": "verde",
+      "avance": "IFLOW: ",
+      "estado": "• 8/9: Reunión operativa y visita a deposito, con el equipo de ILFOW y de RDC (SMartinez, CCUbillas y GFranco. \n• Avance sobre cuestiones operativas de mudanza, entrega a pedidos, Gestion de pallets, etc"
+    },
+    {
+      "id": "id_9k804lxg",
+      "semaforo": "verde",
+      "avance": "Visita a Tte. Frios del Norte",
+      "estado": "• 9/9: Visita para entender y explorar futuras posibilidades de negocios. Ej.: Cambio de TSP Mendoza.\n• Contacto con Gerencia Comercial. \n• Algunas quejas de lo complicado de negociar con Sebastian"
+    },
+    {
+      "id": "id_mnz4d2mm",
+      "semaforo": "rojo",
+      "avance": "Segmentacion de clientes",
+      "estado": "• Sin avance"
+    },
+    {
+      "id": "id_oezbdu1f",
+      "semaforo": "verde",
+      "avance": "Prueba envio de Levaduras",
+      "estado": "• Jeremías esta coordinando el primer envió. "
+    },
+    {
+      "id": "id_g9pjqct8",
+      "semaforo": "verde",
+      "avance": "Destruccion producto Vencido LL y AMC",
+      "estado": "• En curso. Confirmado. hay una parte que quedara fuera de planta para cargarla luego y darle destino. \n• El reproceso fue retirado semana pasada por proveedor. \n• Lunes próximo retiran Glucosa. (No dieron temperaturas de carga el lunes pasado)"
+    },
+    {
+      "id": "id_lw76kfm6",
+      "semaforo": "verde",
+      "avance": "Cubo",
+      "estado": "• Se volvió a solicitar restricción de transito por los deposito de personal. \n• Falla de naveta post-mantenimiento: tras una intervención de mantenimiento en el sistema (según se aclara después, sobre la red de Refinería), la naveta empieza a presentar fallas. Diego relaciona la coincidencia de fechas con la caída de un segundo carro y plantea determinar causalidad. \n• Caída del segundo carro: mencionada como evento coincidente en el tiempo con el mantenimiento de red, pendiente de confirmar si es causa-efecto o coincidencia.\n• Egreso operativo (sin más detalle en el texto — no queda claro si es causa, consecuencia o un evento aparte del corte de naveta). \n• Naveta frenada nuevamente: recurrencia del problema, no responde en modo automático. \n• Diagnóstico de origen: se abre la duda de si la falla es de comunicación o de red. La respuesta preliminar apunta a comunicación.\n• Demoras y dificultades para dar acceso a VPN para ingreso. \n• Viernes 19/9 reunión con Quintino. (Proveedor de implementaciones tecnológicas para el movimiento de materiales)"
+    },
+    {
+      "id": "id_ycr2uq4x",
+      "semaforo": "verde",
+      "avance": "Entorno ASA",
+      "estado": "• Problemas en correlación de datos entre un entorno y el otro: Corregido. \n• German esta verificando si funcionan las notas de pedido por reposición (Reemplazo de Rem. Internos)\n• Ariel marco gran lista de diferencias"
+    },
+    {
+      "id": "id_l4idl96j",
+      "semaforo": "rojo",
+      "avance": "Cambio Andres Chichalof",
+      "estado": "• Entrevista realizada. Enviaron reporte de reunión. Revisemos petición salarial.\n• 16/9: Andres vino a informar que no le daba para seguir en el puesto. \n• Ver opciones"
+    },
+    {
+      "id": "id_p69mc97k",
+      "semaforo": "verde",
+      "avance": "Compra Traspallet electricos para camiones reparto",
+      "estado": "• Compre 3 equipos para camiones de reparto. "
+    },
+    {
+      "id": "id_iwga1vb5",
+      "semaforo": "verde",
+      "avance": "Monitoreo Comex",
+      "estado": "• Casi listo. \n• Resta trabajar en qlik"
+    },
+    {
+      "id": "id_mg522mab",
+      "semaforo": "verde",
+      "avance": "Arquitectura logistica",
+      "estado": "• En simultaneo: Diseño operativo de Picking. Modelo de servicio, Arquitectura optima de red y estrategia inventarios multi nodos\n• Resta avazar con desarrollos de qlik."
+    },
+    {
+      "id": "id_aqeur8m0",
+      "semaforo": "verde",
+      "avance": "Deposito transitorio picking",
+      "estado": "• Analizando viabilidad de strechadora de Graba y/o LL\n• Preparando zona de picking en parte trasera de deposito. \n• Personal de depósitos involucrados en desarrollo de solución. "
+    },
+    {
+      "id": "id_qb0bvhpt",
+      "semaforo": "verde",
+      "avance": "Decomisos en Helios",
+      "estado": "• Compraron equipo que realiza separacion de packaging de producto\n• Instalando durante esta semana. Proxima en uso. \n• Se podria enviar producto LL\n• "
+    }
+  ]
 }
