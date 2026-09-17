@@ -753,6 +753,7 @@
       <div class="section-head">
         <h3 style="font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:600;margin:0;">Seguimiento semanal</h3>
         <button class="btn-ghost" onclick="copyJavierWeekRich()" title="Copia el resumen de la semana con el mismo formato de la pantalla, listo para pegar en mail, Teams, OneNote, etc.">📋 Copiar resumen</button>
+        <button class="btn-ghost" onclick="publishJavierSnapshot()" title="Publica el resumen de esta semana en el link de solo lectura para Javier">🔗 Publicar para Javier</button>
       </div>
       <nav class="subnav" id="javierWeekTabs" role="tablist"></nav>
       <div id="javierWeekTables"></div>
@@ -3104,6 +3105,36 @@ function renderJavierWeeklyTabs(){
     <button class="${key === selectedJavierWeekKey ? 'active' : ''}" onclick="selectJavierWeek('${key}')">${formatJavierWeekTabLabel(key)}</button>
   `).join('');
   nav.innerHTML = html;
+}
+
+// Publica un snapshot de solo lectura para Javier: arma el JSON de la semana actual,
+// lo copia al portapapeles y abre la página de GitHub para pegarlo en javier-data.json.
+// Javier ve el resultado siempre en el mismo link (javier.html), sin necesidad de reenviarle nada.
+function publishJavierSnapshot(){
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const weekLbl = formatJavierWeekTabLabel(selectedJavierWeekKey);
+  const payload = {
+    weekKey: selectedJavierWeekKey,
+    weekLabel: weekLbl,
+    publishedAt: new Date().toISOString(),
+    prioridades: bucket.prioridades,
+    riesgos: bucket.riesgos,
+    necesito: bucket.necesito,
+    avances: bucket.avances
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const editUrl = 'https://github.com/martinsrodriguez1976-ctrl/Life-os/edit/main/javier-data.json';
+  const finish = (msg) => showToast(msg);
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(json)
+      .then(() => {
+        window.open(editUrl, '_blank');
+        finish('JSON copiado. En la pestaña de GitHub: Ctrl+A, Ctrl+V y "Commit changes".');
+      })
+      .catch(() => finish('No se pudo copiar automático. Copiá el JSON manualmente desde la consola.'));
+  } else {
+    finish('Este navegador no permite copiar automático.');
+  }
 }
 
 // Formato de fila "espejo": 🔴/🟡/🟢 + avance arriba, estado indentado debajo (igual a copyJavierWeekRich).
