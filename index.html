@@ -3152,7 +3152,6 @@ function renderJavierWeekly(){
 function copyJavierWeekRich(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const weekLbl = formatJavierWeekTabLabel(selectedJavierWeekKey);
-  const semaforoColor = { rojo: '#C24A3F', amarillo: '#C68A2E', verde: '#2F8F5B' };
   const semaforoTxt = { rojo: '🔴', amarillo: '🟡', verde: '🟢' };
   const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
@@ -3198,9 +3197,8 @@ function copyJavierWeekRich(){
     const rows = bucket[s.key];
     if (rows.length){
       rows.forEach(r => {
-        const color = semaforoColor[r.semaforo] || '#999';
         html += `<div style="margin-bottom:8px;">`;
-        html += `<span style="color:${color};font-weight:bold;">●</span> `;
+        html += `${semaforoTxt[r.semaforo] || '⚪'} `;
         html += `<b>${esc(r.avance || '(sin avance)')}</b>`;
         if (r.estado && r.estado.trim()){
           html += `<div style="margin:2px 0 0 18px;color:#444;white-space:pre-wrap;">${esc(r.estado)}</div>`;
