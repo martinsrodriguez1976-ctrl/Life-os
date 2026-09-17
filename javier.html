@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reunión con Javier — RDC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1F4;--card:#FFFFFF;--accent:#3D5A73;--accent-soft:#E2E9EE;
+    --text-primary:#20262C;--text-secondary:#5C6772;--text-tertiary:#93A0AC;
+    --border:#DCE2E7;--red:#C24A3F;--amber:#C68A2E;--green:#2F8F5B;
+    --radius-lg:20px;--radius-md:14px;--shadow:0 1px 2px rgba(20,20,15,.04),0 8px 24px rgba(20,20,15,.05);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text-primary);font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;}
+  .topbar{height:8px;background:linear-gradient(90deg,#2F4759,#3D5A73);}
+  .wrap{max-width:760px;margin:0 auto;padding:40px 24px 80px;}
+  h1{font-family:'Poppins',sans-serif;font-weight:600;font-size:26px;margin:0 0 4px;}
+  .meta{color:var(--text-tertiary);font-size:13px;margin-bottom:28px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .meta button{border:1px solid var(--border);background:var(--card);color:var(--text-secondary);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit;}
+  .meta button:hover{background:var(--accent-soft);}
+  .card{background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:24px 26px;margin-bottom:20px;}
+  .card h2{font-family:'Poppins',sans-serif;font-size:13px;letter-spacing:.4px;text-transform:uppercase;color:var(--text-secondary);margin:0 0 14px;}
+  ol{margin:0;padding-left:20px;}
+  ol li{margin-bottom:8px;line-height:1.4;}
+  ol li.done{text-decoration:line-through;color:var(--text-tertiary);}
+  .row{margin-bottom:16px;}
+  .row:last-child{margin-bottom:0;}
+  .row .avance{font-weight:600;}
+  .row .estado{margin:4px 0 0 24px;color:var(--text-secondary);white-space:pre-wrap;font-size:14px;line-height:1.4;}
+  .empty{color:var(--text-tertiary);font-style:italic;font-size:14px;}
+  .loading, .err {padding:40px;text-align:center;color:var(--text-tertiary);}
+  footer{text-align:center;color:var(--text-tertiary);font-size:12px;margin-top:20px;}
+</style>
+</head>
+<body>
+<div class="topbar"></div>
+<div class="wrap">
+  <div id="content" class="loading">Cargando…</div>
+  <footer>Vista de solo lectura — Refinería del Centro</footer>
+</div>
+<script>
+const SEMAFORO_EMOJI = { rojo:'🔴', amarillo:'🟡', verde:'🟢' };
+const SECTIONS = [
+  {key:'riesgos', label:'Riesgos y bloqueos'},
+  {key:'necesito', label:'Necesito de vos'},
+  {key:'avances', label:'Avances destacados'}
+];
+
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fmtDate(iso){
+  if (!iso) return 'sin publicar todavía';
+  try{
+    const d = new Date(iso);
+    return d.toLocaleString('es-AR', {dateStyle:'medium', timeStyle:'short'});
+  }catch(e){ return iso; }
+}
+
+function render(data){
+  const el = document.getElementById('content');
+  let html = '<h1>Reunión con Javier' + (data.weekLabel ? ' — ' + esc(data.weekLabel) : '') + '</h1>';
+  html += '<div class="meta">Última actualización: ' + esc(fmtDate(data.publishedAt)) + ' <button onclick="load()">↻ Actualizar</button></div>';
+
+  html += '<div class="card"><h2>Prioridades para la reunión</h2>';
+  if (data.prioridades && data.prioridades.length){
+    html += '<ol>';
+    data.prioridades.forEach(function(p){
+      html += '<li class="' + (p.hecho?'done':'') + '">' + (p.hecho?'<b>[Hecho]</b> ':'') + esc(p.texto||'(sin texto)') + '</li>';
+    });
+    html += '</ol>';
+  } else {
+    html += '<p class="empty">Sin prioridades cargadas.</p>';
+  }
+  html += '</div>';
+
+  SECTIONS.forEach(function(s){
+    html += '<div class="card"><h2>' + esc(s.label) + '</h2>';
+    const rows = data[s.key] || [];
+    if (rows.length){
+      rows.forEach(function(r){
+        html += '<div class="row">';
+        html += (SEMAFORO_EMOJI[r.semaforo]||'⚪') + ' <span class="avance">' + esc(r.avance||'(sin avance)') + '</span>';
+        if (r.estado && r.estado.trim()){
+          html += '<div class="estado">' + esc(r.estado) + '</div>';
+        }
+        html += '</div>';
+      });
+    } else {
+      html += '<p class="empty">Sin datos.</p>';
+    }
+    html += '</div>';
+  });
+
+  el.className = '';
+  el.innerHTML = html;
+}
+
+function load(){
+  const el = document.getElementById('content');
+  fetch('javier-data.json?t=' + Date.now(), {cache:'no-store'})
+    .then(function(res){ if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+    .then(render)
+    .catch(function(e){
+      el.className = 'err';
+      el.textContent = 'No se pudo cargar la información. Probá recargar la página en unos segundos.';
+    });
+}
+
+load();
+setInterval(load, 120000);
+</script>
+</body>
+</html>
