@@ -752,7 +752,7 @@
     <div class="agenda-section" id="sec-javier-weekly">
       <div class="section-head">
         <h3 style="font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:600;margin:0;">Seguimiento semanal</h3>
-        <button class="btn-ghost" onclick="sendJavierWeekToOneNote()" title="Copia el resumen de la semana y abre la sección de OneNote para pegarlo">📓 Enviar a OneNote</button>
+        <button class="btn-ghost" onclick="copyJavierWeekRich()" title="Copia el resumen de la semana con el mismo formato de la pantalla, listo para pegar en mail, Teams, OneNote, etc.">📋 Copiar resumen</button>
       </div>
       <nav class="subnav" id="javierWeekTabs" role="tablist"></nav>
       <div id="javierWeekTables"></div>
@@ -3106,7 +3106,7 @@ function renderJavierWeeklyTabs(){
   nav.innerHTML = html;
 }
 
-// Formato de fila "espejo": 🔴/🟡/🟢 + avance arriba, estado indentado debajo (igual a sendJavierWeekToOneNote).
+// Formato de fila "espejo": 🔴/🟡/🟢 + avance arriba, estado indentado debajo (igual a copyJavierWeekRich).
 function renderJavierWeeklySectionTable(section, label){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const rows = bucket[section];
@@ -3149,47 +3149,90 @@ function renderJavierWeekly(){
 }
 
 // ---- Enviar por mail (Outlook Web, vía Chrome) todo lo de la semana seleccionada ----
-function sendJavierWeekToOneNote(){
+function copyJavierWeekRich(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const weekLbl = formatJavierWeekTabLabel(selectedJavierWeekKey);
+  const semaforoColor = { rojo: '#C24A3F', amarillo: '#C68A2E', verde: '#2F8F5B' };
   const semaforoTxt = { rojo: '🔴', amarillo: '🟡', verde: '🟢' };
+  const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-  let body = `Reunión con Javier — ${weekLbl}\n\n`;
-
-  body += `PRIORIDADES PARA LA REUNIÓN\n`;
+  let text = `Reunión con Javier — ${weekLbl}\n\n`;
+  text += `PRIORIDADES PARA LA REUNIÓN\n`;
   if (bucket.prioridades.length){
     bucket.prioridades.forEach((p, i) => {
-      body += `${i + 1}. ${p.hecho ? '[Hecho] ' : ''}${p.texto || '(sin texto)'}\n`;
+      text += `${i + 1}. ${p.hecho ? '[Hecho] ' : ''}${p.texto || '(sin texto)'}\n`;
     });
   } else {
-    body += `(sin prioridades cargadas)\n`;
+    text += `(sin prioridades cargadas)\n`;
   }
-  body += `\n`;
-
+  text += `\n`;
   JAVIER_WEEKLY_SECTIONS.forEach(s => {
-    body += `${s.label.toUpperCase()}\n`;
+    text += `${s.label.toUpperCase()}\n`;
     const rows = bucket[s.key];
     if (rows.length){
       rows.forEach(r => {
-        body += `${semaforoTxt[r.semaforo] || '⚪'} ${r.avance || '(sin avance)'}\n`;
-        if (r.estado && r.estado.trim()) body += `   ${r.estado.replace(/\n/g, '\n   ')}\n`;
+        text += `${semaforoTxt[r.semaforo] || '⚪'} ${r.avance || '(sin avance)'}\n`;
+        if (r.estado && r.estado.trim()) text += `   ${r.estado.replace(/\n/g, '\n   ')}\n`;
       });
     } else {
-      body += `(sin datos)\n`;
+      text += `(sin datos)\n`;
     }
-    body += `\n`;
+    text += `\n`;
   });
 
-  const oneNoteUrl = 'https://refineriadelcentrosa-my.sharepoint.com/personal/jjuszczyk_rdcindustrial_com/_layouts/15/Doc.aspx?sourcedoc={6a41a9b0-d198-407f-b4c3-e92405c6935a}&action=edit&wd=target%282026.one%7Ce5417073-7a1e-4cde-a0f5-53113782dada%2F%29&wdorigin=NavigationUrl';
-
-  window.open(oneNoteUrl, '_blank');
-
-  if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(body)
-      .then(() => showToast('Copiado. Pegalo (Ctrl+V) en la página de esta semana en OneNote.'))
-      .catch(() => showToast('No se pudo copiar automático. Copiá el texto manualmente.'));
+  let html = `<div style="font-family:Calibri,Arial,sans-serif;font-size:14px;color:#222;">`;
+  html += `<h2 style="font-family:Poppins,Arial,sans-serif;font-size:18px;margin:0 0 12px;">Reunión con Javier — ${esc(weekLbl)}</h2>`;
+  html += `<h3 style="font-size:13px;letter-spacing:.3px;margin:16px 0 6px;">PRIORIDADES PARA LA REUNIÓN</h3>`;
+  if (bucket.prioridades.length){
+    html += `<ol style="margin:0 0 0 20px;padding:0;">`;
+    bucket.prioridades.forEach(p => {
+      const done = p.hecho;
+      html += `<li style="margin-bottom:4px;${done ? 'text-decoration:line-through;color:#888;' : ''}">${done ? '<b>[Hecho]</b> ' : ''}${esc(p.texto || '(sin texto)')}</li>`;
+    });
+    html += `</ol>`;
   } else {
-    showToast('Este navegador no permite copiar automático. Copiá el texto manualmente.');
+    html += `<p style="color:#888;margin:0;">(sin prioridades cargadas)</p>`;
+  }
+  JAVIER_WEEKLY_SECTIONS.forEach(s => {
+    html += `<h3 style="font-size:13px;letter-spacing:.3px;margin:18px 0 6px;">${esc(s.label.toUpperCase())}</h3>`;
+    const rows = bucket[s.key];
+    if (rows.length){
+      rows.forEach(r => {
+        const color = semaforoColor[r.semaforo] || '#999';
+        html += `<div style="margin-bottom:8px;">`;
+        html += `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:6px;"></span>`;
+        html += `<b>${esc(r.avance || '(sin avance)')}</b>`;
+        if (r.estado && r.estado.trim()){
+          html += `<div style="margin:2px 0 0 18px;color:#444;white-space:pre-wrap;">${esc(r.estado)}</div>`;
+        }
+        html += `</div>`;
+      });
+    } else {
+      html += `<p style="color:#888;margin:0;">(sin datos)</p>`;
+    }
+  });
+  html += `</div>`;
+
+  const finish = (msg) => showToast(msg);
+
+  if (navigator.clipboard && window.ClipboardItem){
+    const item = new ClipboardItem({
+      'text/html': new Blob([html], {type:'text/html'}),
+      'text/plain': new Blob([text], {type:'text/plain'})
+    });
+    navigator.clipboard.write([item])
+      .then(() => finish('Copiado con formato. Pegalo (Ctrl+V) donde quieras: mail, Teams, OneNote...'))
+      .catch(() => {
+        navigator.clipboard.writeText(text)
+          .then(() => finish('Se copió como texto simple (el navegador no permitió copiar con formato).'))
+          .catch(() => finish('No se pudo copiar automáticamente. Copiá el texto manualmente.'));
+      });
+  } else if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text)
+      .then(() => finish('Copiado como texto simple (este navegador no admite copiar con formato).'))
+      .catch(() => finish('No se pudo copiar automáticamente. Copiá el texto manualmente.'));
+  } else {
+    finish('Este navegador no permite copiar automático. Copiá el texto manualmente.');
   }
 }
 
