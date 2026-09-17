@@ -3200,7 +3200,7 @@ function copyJavierWeekRich(){
       rows.forEach(r => {
         const color = semaforoColor[r.semaforo] || '#999';
         html += `<div style="margin-bottom:8px;">`;
-        html += `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:6px;"></span>`;
+        html += `<span style="color:${color};font-weight:bold;">●</span> `;
         html += `<b>${esc(r.avance || '(sin avance)')}</b>`;
         if (r.estado && r.estado.trim()){
           html += `<div style="margin:2px 0 0 18px;color:#444;white-space:pre-wrap;">${esc(r.estado)}</div>`;
