@@ -1,9 +1,73 @@
 {
-  "weekKey": "",
-  "weekLabel": "",
-  "publishedAt": "",
-  "prioridades": [],
-  "riesgos": [],
-  "necesito": [],
+  "weekKey": "2026-09-14",
+  "weekLabel": "Semana 38",
+  "publishedAt": "2026-09-17T12:31:59.855Z",
+  "prioridades": [
+    {
+      "id": "id_j6kx55w9",
+      "texto": "Vaciiado de PT de deposito LL",
+      "hecho": false
+    },
+    {
+      "id": "id_aew2zkgl",
+      "texto": "Avanzar con desarrollo deposito picking",
+      "hecho": false
+    },
+    {
+      "id": "id_tqcabysd",
+      "texto": "Segmentacion de clientes y Punto de carga",
+      "hecho": false
+    },
+    {
+      "id": "id_j35mh9xu",
+      "texto": "Previsdion de demanda",
+      "hecho": false
+    },
+    {
+      "id": "id_ugki6dp0",
+      "texto": "Vencidos LL y AMC",
+      "hecho": false
+    }
+  ],
+  "riesgos": [
+    {
+      "id": "id_jfmobt81",
+      "semaforo": "amarillo",
+      "avance": "COT",
+      "estado": "\n• Base interior subida\n• Raurell esta actualizando CP de capital para subir\n• 7100 sigue sin funcionar"
+    },
+    {
+      "id": "id_atnk664x",
+      "semaforo": "amarillo",
+      "avance": "Americold",
+      "estado": "• Confirmado. Venta a Axis. "
+    },
+    {
+      "id": "id_xlca7onr",
+      "semaforo": "amarillo",
+      "avance": "Nuevo deposito de Picking",
+      "estado": "• DR y LA, quisieron reunirse con Maya. \n• Pretenden dimensionar considerando que el cubo funcionara. Voy a seguir con mi plan. (Si no van a sumar...que se corran..jejeje)"
+    },
+    {
+      "id": "id_n7jw3o5s",
+      "semaforo": "amarillo",
+      "avance": "Lavadero BUE",
+      "estado": "• Denunciado en ambiente. Estamos buscando alternativas. \n• Se solicito a CB y RV posibilidad de activacion lavadero graba"
+    },
+    {
+      "id": "id_4ytw7nic",
+      "semaforo": "amarillo",
+      "avance": "Imputaciones erroneas de presupuesto",
+      "estado": "• Siguen imputando repuestos de cubo.  "
+    }
+  ],
+  "necesito": [
+    {
+      "id": "id_7xfh3558",
+      "semaforo": "rojo",
+      "avance": "Sistemas",
+      "estado": "• IFLOW: Avanzar con Apis de interacción de sistemas"
+    }
+  ],
   "avances": []
 }
