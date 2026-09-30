@@ -32,9 +32,10 @@
   .row .estado{margin:4px 0 0 24px;color:var(--text-secondary);white-space:pre-wrap;font-size:14px;line-height:1.4;}
   .empty{color:var(--text-tertiary);font-style:italic;font-size:14px;}
   .adjuntos{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 24px;}
-  .adj-img-link{display:block;}
-  .adj-img{width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block;}
+  .adj-img{width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block;cursor:zoom-in;}
   .adj-file{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:6px 10px;text-decoration:none;}
+  #imgLightbox{position:fixed;inset:0;background:rgba(15,20,25,.88);display:none;align-items:center;justify-content:center;z-index:9999;cursor:zoom-out;padding:24px;}
+  #imgLightbox img{max-width:96%;max-height:96%;border-radius:10px;box-shadow:0 12px 48px rgba(0,0,0,.5);}
   .loading, .err {padding:40px;text-align:center;color:var(--text-tertiary);}
   footer{text-align:center;color:var(--text-tertiary);font-size:12px;margin-top:20px;}
 </style>
@@ -45,6 +46,7 @@
   <div id="content" class="loading">Cargando…</div>
   <footer>Vista de solo lectura — Refinería del Centro</footer>
 </div>
+<div id="imgLightbox" onclick="this.style.display='none';this.innerHTML='';"></div>
 <script>
 const SEMAFORO_EMOJI = { rojo:'🔴', amarillo:'🟡', verde:'🟢' };
 const SECTIONS = [
@@ -96,7 +98,7 @@ function render(data){
           html += '<div class="adjuntos">';
           r.adjuntos.forEach(function(a){
             if (a.esImagen){
-              html += '<a href="' + a.dataUrl + '" target="_blank" class="adj-img-link"><img src="' + a.dataUrl + '" class="adj-img" alt="' + esc(a.nombre) + '"></a>';
+              html += '<img src="' + a.dataUrl + '" class="adj-img" alt="' + esc(a.nombre) + '" onclick="event.stopPropagation();showImgLightbox(this.src)">';
             } else {
               html += '<a href="' + a.dataUrl + '" download="' + esc(a.nombre) + '" class="adj-file">📎 ' + esc(a.nombre) + '</a>';
             }
@@ -113,6 +115,16 @@ function render(data){
 
   el.className = '';
   el.innerHTML = html;
+}
+
+// Chrome (y otros navegadores) bloquean la navegación de una pestaña nueva
+// directo a una data: URL (target="_blank" o window.open): la pestaña queda
+// en blanco sin ningún aviso visible. Por eso la foto se ve en un visor
+// dentro de la misma página, sin abrir pestañas.
+function showImgLightbox(src){
+  const el = document.getElementById('imgLightbox');
+  el.innerHTML = '<img src="' + src + '">';
+  el.style.display = 'flex';
 }
 
 function load(){
