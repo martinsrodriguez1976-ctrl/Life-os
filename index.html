@@ -3153,6 +3153,7 @@ function renderJavierWeeklySectionTable(section, label){
             oninput="autoGrowTextarea(this)"
             onkeydown="handleWeeklyEstadoEnter(event,'${section}','${r.id}',this)"
           >${escapeHtml(r.estado)}</textarea>
+      ${renderJavierAttachments(section, r)}
     </div>
   `).join('') : `<div class="empty-state" style="padding:18px 8px;">(sin datos)</div>`;
   return `
@@ -3179,6 +3180,173 @@ function renderJavierWeekly(){
   renderJavierWeeklyTables();
 }
 
+// ---- Adjuntos (fotos/archivos) en filas de Riesgos/Necesito/Avances ----
+// Se guardan como dataURL (base64) directo en el row: sin backend, viajan solos
+// con el resto del dato (localStorage, backup .json, sync a OneDrive y el
+// publish a Javier), sin tocar ningún otro flujo.
+function renderJavierAttachments(section, r){
+  const adjuntos = r.adjuntos || [];
+  const chips = adjuntos.map(a => {
+    const thumb = a.esImagen
+      ? `<img src="${a.dataUrl}" style="width:34px;height:34px;object-fit:cover;border-radius:6px;display:block;">`
+      : `<span style="font-size:18px;line-height:34px;">📄</span>`;
+    return `
+      <span class="weekly-attach-chip" style="position:relative;display:inline-flex;align-items:center;gap:6px;background:var(--pill-track,#eee);border-radius:8px;padding:3px 8px 3px 3px;cursor:pointer;max-width:170px;" onclick="openJavierAttachment('${section}','${r.id}','${a.id}')" title="${escapeAttr(a.nombre)}">
+        ${thumb}
+        <span style="font-size:11.5px;color:var(--text-secondary,#555);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px;">${escapeHtml(a.nombre)}</span>
+        <button class="icon-btn" style="width:16px;height:16px;font-size:10px;line-height:16px;padding:0;" onclick="event.stopPropagation();removeJavierAttachment('${section}','${r.id}','${a.id}')">✕</button>
+      </span>`;
+  }).join('');
+  return `
+    <div class="weekly-attach-row" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;">
+      ${chips}
+      <button class="icon-btn" title="Adjuntar foto o archivo" onclick="openJavierAttachPicker('${section}','${r.id}')">📎</button>
+    </div>`;
+}
+
+let javierAttachTarget = null;
+
+function openJavierAttachPicker(section, rowId){
+  javierAttachTarget = { section, rowId };
+  let input = document.getElementById('javierAttachInput');
+  if (!input){
+    input = document.createElement('input');
+    input.type = 'file';
+    input.id = 'javierAttachInput';
+    input.multiple = true;
+    input.accept = 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt';
+    input.style.display = 'none';
+    input.addEventListener('change', () => handleJavierAttachInputChange(input));
+    document.body.appendChild(input);
+  }
+  input.value = '';
+  input.click();
+}
+
+function compressImageFile(file){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => { img.src = e.target.result; };
+    reader.onerror = reject;
+    img.onload = () => {
+      const maxDim = 1600;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim){
+        const ratio = Math.min(maxDim / w, maxDim / h);
+        w = Math.round(w * ratio);
+        h = Math.round(h * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.75));
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function readFileAsDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function approxBytesFromDataUrl(dataUrl){
+  const i = dataUrl.indexOf(',');
+  const b64 = i >= 0 ? dataUrl.slice(i + 1) : dataUrl;
+  return Math.round(b64.length * 0.75);
+}
+
+function trySaveData(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    scheduleSyncPush();
+    return true;
+  } catch(e){
+    return false;
+  }
+}
+
+async function handleJavierAttachInputChange(input){
+  const target = javierAttachTarget;
+  if (!target || !input.files || !input.files.length) return;
+  const { section, rowId } = target;
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const row = bucket[section].find(r => r.id === rowId);
+  if (!row){ input.value=''; javierAttachTarget=null; return; }
+  if (!row.adjuntos) row.adjuntos = [];
+
+  const MAX_IMG_BYTES = 15 * 1024 * 1024;
+  const MAX_FILE_BYTES = 4 * 1024 * 1024;
+  const files = Array.from(input.files);
+  let added = 0;
+
+  for (const file of files){
+    const esImagen = file.type.startsWith('image/');
+    const limite = esImagen ? MAX_IMG_BYTES : MAX_FILE_BYTES;
+    if (file.size > limite){
+      showToast(`"${file.name}" pesa demasiado (máx. ${esImagen ? '15MB' : '4MB'}). No se adjuntó.`);
+      continue;
+    }
+    try {
+      const dataUrl = esImagen ? await compressImageFile(file) : await readFileAsDataUrl(file);
+      row.adjuntos.push({
+        id: cid(),
+        nombre: file.name,
+        tipo: file.type || 'application/octet-stream',
+        dataUrl,
+        tamano: approxBytesFromDataUrl(dataUrl),
+        esImagen
+      });
+      added++;
+    } catch(e){
+      showToast(`No se pudo leer "${file.name}".`);
+    }
+  }
+
+  if (added){
+    const ok = trySaveData();
+    if (!ok){
+      row.adjuntos.splice(row.adjuntos.length - added, added);
+      showToast('No hay espacio suficiente para guardar el/los adjunto(s). Borrá adjuntos viejos o usá archivos más livianos.');
+    }
+    renderJavierWeeklyTables();
+  }
+  input.value = '';
+  javierAttachTarget = null;
+}
+
+function removeJavierAttachment(section, rowId, attId){
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const row = bucket[section].find(r => r.id === rowId);
+  if (!row || !row.adjuntos) return;
+  row.adjuntos = row.adjuntos.filter(a => a.id !== attId);
+  save();
+  renderJavierWeeklyTables();
+}
+
+function openJavierAttachment(section, rowId, attId){
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const row = bucket[section].find(r => r.id === rowId);
+  const att = row && row.adjuntos ? row.adjuntos.find(a => a.id === attId) : null;
+  if (!att) return;
+  if (att.esImagen){
+    window.open(att.dataUrl, '_blank');
+  } else {
+    const a = document.createElement('a');
+    a.href = att.dataUrl;
+    a.download = att.nombre || 'archivo';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+}
+
 // ---- Enviar por mail (Outlook Web, vía Chrome) todo lo de la semana seleccionada ----
 function copyJavierWeekRich(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
@@ -3203,6 +3371,9 @@ function copyJavierWeekRich(){
       rows.forEach(r => {
         text += `${semaforoTxt[r.semaforo] || '⚪'} ${r.avance || '(sin avance)'}\n`;
         if (r.estado && r.estado.trim()) text += `   ${r.estado.replace(/\n/g, '\n   ')}\n`;
+        if (r.adjuntos && r.adjuntos.length){
+          r.adjuntos.forEach(a => { text += `   📎 ${a.nombre}\n`; });
+        }
       });
     } else {
       text += `(sin datos)\n`;
@@ -3233,6 +3404,15 @@ function copyJavierWeekRich(){
         html += `<b>${esc(r.avance || '(sin avance)')}</b>`;
         if (r.estado && r.estado.trim()){
           html += `<div style="margin:2px 0 0 18px;color:#444;white-space:pre-wrap;">${esc(r.estado)}</div>`;
+        }
+        if (r.adjuntos && r.adjuntos.length){
+          r.adjuntos.forEach(a => {
+            if (a.esImagen){
+              html += `<div style="margin:6px 0 0 18px;"><img src="${a.dataUrl}" style="max-width:280px;max-height:280px;border-radius:6px;display:block;"></div>`;
+            } else {
+              html += `<div style="margin:4px 0 0 18px;color:#555;font-size:13px;">📎 ${esc(a.nombre)}</div>`;
+            }
+          });
         }
         html += `</div>`;
       });
