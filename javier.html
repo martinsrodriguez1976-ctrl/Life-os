@@ -31,6 +31,10 @@
   .row .avance{font-weight:600;}
   .row .estado{margin:4px 0 0 24px;color:var(--text-secondary);white-space:pre-wrap;font-size:14px;line-height:1.4;}
   .empty{color:var(--text-tertiary);font-style:italic;font-size:14px;}
+  .adjuntos{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0 24px;}
+  .adj-img-link{display:block;}
+  .adj-img{width:90px;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block;}
+  .adj-file{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:6px 10px;text-decoration:none;}
   .loading, .err {padding:40px;text-align:center;color:var(--text-tertiary);}
   footer{text-align:center;color:var(--text-tertiary);font-size:12px;margin-top:20px;}
 </style>
@@ -87,6 +91,17 @@ function render(data){
         html += (SEMAFORO_EMOJI[r.semaforo]||'⚪') + ' <span class="avance">' + esc(r.avance||'(sin avance)') + '</span>';
         if (r.estado && r.estado.trim()){
           html += '<div class="estado">' + esc(r.estado) + '</div>';
+        }
+        if (r.adjuntos && r.adjuntos.length){
+          html += '<div class="adjuntos">';
+          r.adjuntos.forEach(function(a){
+            if (a.esImagen){
+              html += '<a href="' + a.dataUrl + '" target="_blank" class="adj-img-link"><img src="' + a.dataUrl + '" class="adj-img" alt="' + esc(a.nombre) + '"></a>';
+            } else {
+              html += '<a href="' + a.dataUrl + '" download="' + esc(a.nombre) + '" class="adj-file">📎 ' + esc(a.nombre) + '</a>';
+            }
+          });
+          html += '</div>';
         }
         html += '</div>';
       });
