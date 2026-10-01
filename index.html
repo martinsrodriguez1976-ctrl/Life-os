@@ -585,6 +585,17 @@
     </div>
   </div>
 
+  <div class="overlay" id="javierCopyForwardModal">
+    <div class="modal">
+      <h3>Copiar a la semana siguiente</h3>
+      <p id="javierCopyForwardText" style="font-size:13.5px;color:var(--text-secondary);margin:0 0 16px;"></p>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="cancelJavierCopyForward()">Cancelar</button>
+        <button class="btn-add" onclick="confirmJavierCopyForward()">Reemplazar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="sync-bar" id="syncBar">
     <div class="backup-status">
       <span class="sync-dot" id="syncDot"></span>
@@ -752,6 +763,7 @@
     <div class="agenda-section" id="sec-javier-weekly">
       <div class="section-head">
         <h3 style="font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:600;margin:0;">Seguimiento semanal</h3>
+        <button class="btn-ghost" onclick="copyJavierWeekForward()" title="Copia todo el contenido de esta semana (prioridades, riesgos, necesito, avances) tal cual a la semana siguiente, para no tener que volver a escribirlo">➡️ Copiar a la semana siguiente</button>
         <button class="btn-ghost" onclick="copyJavierWeekRich()" title="Copia el resumen de la semana con el mismo formato de la pantalla, listo para pegar en mail, Teams, OneNote, etc.">📋 Copiar resumen</button>
         <button class="btn-ghost" onclick="publishJavierSnapshot()" title="Publica el resumen de esta semana en el link de solo lectura para Javier">🔗 Publicar para Javier</button>
       </div>
@@ -3031,6 +3043,66 @@ function buildJavierWeekBucketFromPrevious(key){
 function selectJavierWeek(key){
   selectedJavierWeekKey = key;
   renderJavierWeekly();
+}
+
+// ---- Copiar semana completa hacia adelante (botón "Copiar a la semana siguiente") ----
+// A diferencia de la herencia automática (que solo trae lo pendiente al entrar por primera vez
+// a una semana nueva), este botón duplica TODO tal cual está: prioridades, riesgos, necesito y
+// avances, resueltos o no. Se usa cuando una semana quedó muy parecida a la anterior y conviene
+// arrancar de esa base en vez de transcribir todo de nuevo. Las filas copiadas son copias con id
+// nuevo: quedan 100% editables en la semana nueva sin tocar el historial de la semana de origen.
+let pendingJavierCopyForwardKey = null;
+
+function getNextJavierWeekKey(key){
+  const d = new Date(key + 'T00:00:00');
+  d.setDate(d.getDate() + 7);
+  return weekKey(d);
+}
+
+function copyJavierWeekForward(){
+  const nextKey = getNextJavierWeekKey(selectedJavierWeekKey);
+  const existing = data.javierWeekly[nextKey];
+  const hasContent = existing && (
+    (existing.prioridades && existing.prioridades.length) ||
+    (existing.riesgos && existing.riesgos.length) ||
+    (existing.necesito && existing.necesito.length) ||
+    (existing.avances && existing.avances.length)
+  );
+  if (hasContent){
+    pendingJavierCopyForwardKey = nextKey;
+    document.getElementById('javierCopyForwardText').textContent =
+      `La ${formatJavierWeekTabLabel(nextKey)} ya tiene contenido cargado. Esto lo reemplaza por completo con una copia de ${formatJavierWeekTabLabel(selectedJavierWeekKey)}. ¿Confirmás?`;
+    openModal('javierCopyForwardModal');
+  } else {
+    doCopyJavierWeekForward(nextKey);
+  }
+}
+
+function doCopyJavierWeekForward(nextKey){
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const carry = (r) => ({ ...r, id: cid() });
+  data.javierWeekly[nextKey] = {
+    prioridades: (bucket.prioridades || []).map(carry),
+    riesgos: (bucket.riesgos || []).map(carry),
+    necesito: (bucket.necesito || []).map(carry),
+    avances: (bucket.avances || []).map(carry)
+  };
+  save();
+  selectJavierWeek(nextKey);
+  showToast(`Copiado completo a ${formatJavierWeekTabLabel(nextKey)}.`);
+}
+
+function confirmJavierCopyForward(){
+  if (!pendingJavierCopyForwardKey){ closeModal('javierCopyForwardModal'); return; }
+  const key = pendingJavierCopyForwardKey;
+  pendingJavierCopyForwardKey = null;
+  closeModal('javierCopyForwardModal');
+  doCopyJavierWeekForward(key);
+}
+
+function cancelJavierCopyForward(){
+  pendingJavierCopyForwardKey = null;
+  closeModal('javierCopyForwardModal');
 }
 
 function addJavierWeeklyRow(section){
