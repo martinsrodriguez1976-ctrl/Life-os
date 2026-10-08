@@ -553,6 +553,155 @@
   .check-list li span.done { text-decoration:line-through; color:var(--text-tertiary); }
   .goal-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 20px; box-shadow:var(--shadow); margin-bottom:14px; }
   .field-label { font-size:11.5px; color:var(--text-secondary); font-weight:600; display:block; margin-bottom:5px; }
+
+  /* ==== Rediseño visual v2 (oct-2026): misma paleta, más jerarquía ==== */
+  :root{
+    --accent-deep:#2F4759;
+    --red-ink:#A83B31; --amber-ink:#8A6420; --green-ink:#237048; /* texto de estado: ≥4.5:1 sobre su fondo suave */
+  }
+  .topbar{height:4px;}
+  .wrap{max-width:1120px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:28px;}
+  header .eyebrow{font-size:12.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);margin:0 0 6px;}
+  header h1{margin:0;}
+  header .date{text-transform:none;margin:4px 0 0;}
+  .day-progress{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 16px 10px 10px;}
+  .day-progress .ring{width:44px;height:44px;}
+  .day-progress .ring circle{fill:none;stroke-width:5;}
+  .day-progress .ring .trk{stroke:var(--pill-track);}
+  .day-progress .ring .val{stroke:var(--accent);stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;transition:stroke-dashoffset .3s ease;}
+  .dp-num{font-family:'Poppins',sans-serif;font-weight:600;font-size:15px;}
+  .dp-lbl{font-size:12.5px;color:var(--text-secondary);}
+
+  nav.tabs{width:fit-content;max-width:100%;padding:4px;gap:2px;}
+  nav.tabs button{padding:9px 18px;font-size:14px;}
+  nav.tabs button.active{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(20,20,15,.08);}
+
+  /* Estados y vencimientos: tinta oscurecida, mismo fondo */
+  .due-ok, .estado-finalizado{color:var(--green-ink);}
+  .due-soon, .estado-en_curso{color:var(--amber-ink);}
+  .due-late, .estado-no_iniciado{color:var(--red-ink);}
+  .trend-up{color:var(--green-ink);} .trend-down{color:var(--red-ink);}
+  .m-trend{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;}
+  .m-trend.trend-up{background:var(--green-soft);} .m-trend.trend-down{background:var(--red-soft);} .m-trend.trend-flat{background:var(--pill-track);color:var(--text-secondary);}
+  .metric-card .m-value{letter-spacing:-.5px;}
+
+  /* Agenda en dos columnas: acción a la izquierda, control a la derecha */
+  .agenda-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;align-items:start;}
+  .agenda-grid .agenda-side .metrics-grid{grid-template-columns:1fr;}
+  @media (max-width:880px){ .agenda-grid{grid-template-columns:minmax(0,1fr);} .agenda-grid .agenda-side .metrics-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));} }
+
+  /* Lista de tareas/proyectos de Agenda: una sola tarjeta con separadores */
+  #panel-agenda .task-list, #panel-agenda .archive-list{gap:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;}
+  #panel-agenda .archive-list{margin:0;border:none;border-radius:0;box-shadow:none;}
+  #panel-agenda .task-list > .task-item, #panel-agenda .archive-list > .task-item{border:none;border-radius:0;border-top:1px solid var(--border);padding:16px 20px;transition:background .15s;}
+  #panel-agenda .task-list > .task-item:first-child{border-top:none;}
+  #panel-agenda .task-item:hover{background:#F8FAFB;}
+  #panel-agenda .task-list > .folder-toggle{border-top:1px solid var(--border);padding:12px 20px;margin:0;}
+  #panel-agenda .task-list > .empty-state:only-child{padding:28px 20px;}
+
+  /* Tarjeta de foco: prioridad #1 de la semana */
+  .focus{position:relative;overflow:hidden;background:var(--accent-deep);color:#fff;border-radius:var(--radius-lg);padding:24px 26px;margin-bottom:32px;}
+  .focus::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:var(--accent);opacity:.55;}
+  .focus::before{content:"";position:absolute;right:70px;bottom:-50px;width:110px;height:110px;border-radius:50%;background:var(--accent);opacity:.35;}
+  .focus > *{position:relative;z-index:1;}
+  .focus .focus-eyebrow{font-size:12.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:#C9D6E0;margin:0 0 6px;}
+  .focus h3{font-family:'Poppins',sans-serif;font-size:22px;font-weight:600;margin:0 0 18px;max-width:560px;line-height:1.3;}
+  .focus-foot{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+  .focus-bar{flex:1;min-width:140px;max-width:280px;height:6px;border-radius:6px;background:rgba(255,255,255,.18);overflow:hidden;}
+  .focus-bar span{display:block;height:100%;background:#fff;border-radius:6px;}
+  .focus-meta{font-size:12.5px;color:#C9D6E0;}
+  .btn-light{border:none;background:#fff;color:var(--accent-deep);font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:8px 14px;border-radius:var(--radius-sm);cursor:pointer;}
+  .btn-light:hover{opacity:.9;}
+
+  /* Indicadores: barra con marca de meta + estado en palabras */
+  .ind-meter{position:relative;height:6px;border-radius:6px;background:var(--pill-track);margin:12px 0 8px;}
+  .ind-meter span{position:absolute;left:0;top:0;bottom:0;border-radius:6px;}
+  .ind-meter i{position:absolute;top:-3px;width:2px;height:12px;background:var(--text-primary);border-radius:1px;}
+  .ind-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
+  .ind-status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .ind-status.verde{color:var(--green-ink);} .ind-status.amarillo{color:var(--amber-ink);} .ind-status.rojo{color:var(--red-ink);} .ind-status.sindato{color:var(--text-secondary);}
+  .ind-meter .verde{background:var(--green);} .ind-meter .amarillo{background:var(--amber);} .ind-meter .rojo{background:var(--red);}
+
+  @media (max-width:560px){ .focus{padding:20px;} .focus h3{font-size:19px;} #panel-agenda .task-list > .task-item{padding:14px 16px;} }
+
+  /* ==== v2: Colaboradores ==== */
+  .collab-sidebar{padding:8px;width:260px;}
+  .collab-sidebar-item{gap:10px;padding:8px 10px;font-weight:500;color:var(--text-primary);}
+  .collab-sidebar-item .cs-avatar{width:30px;height:30px;border-radius:50%;background:var(--pill-track);color:var(--text-secondary);font:600 12px 'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .collab-sidebar-item.active .cs-avatar{background:var(--accent);color:#fff;}
+  .collab-sidebar-item.active{background:var(--accent-soft);color:var(--text-primary);font-weight:600;}
+  .collab-sidebar-item .cs-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .collab-sidebar-item .cs-count{font-size:11.5px;font-weight:600;color:var(--text-secondary);background:var(--card);border:1px solid var(--border);border-radius:999px;padding:1px 7px;flex-shrink:0;}
+  .collab-sidebar-item .cs-count.late{color:var(--red-ink);background:var(--red-soft);border-color:transparent;}
+  .collab-del-btn{opacity:0;}
+  .collab-sidebar-item:hover .collab-del-btn{opacity:.6;}
+  .collab-content-title{margin-bottom:0;}
+  .collab-summary{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+  .collab-summary b{color:var(--red-ink);font-weight:600;}
+  #panel-colaboradores .collab-content > .section-head{align-items:flex-end;}
+  #panel-colaboradores .mail-bar{background:transparent;border:1px dashed var(--border);padding:8px 12px;}
+  #panel-colaboradores .task-list{gap:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;}
+  #panel-colaboradores .task-list > .task-item, #panel-colaboradores .archive-list > .task-item{border:none;border-radius:0;border-top:1px solid var(--border);padding:16px 20px;transition:background .15s;}
+  #panel-colaboradores .task-list > .task-item:first-child{border-top:none;}
+  #panel-colaboradores .task-item:hover{background:#F8FAFB;}
+  #panel-colaboradores .archive-list{margin:0;gap:0;}
+  #panel-colaboradores .task-list > .folder-toggle{border-top:1px solid var(--border);padding:12px 20px;margin:0;}
+  #panel-colaboradores .toggle-subtasks{padding-left:0;font-size:11.5px;font-weight:600;}
+  #panel-colaboradores .task-tags:empty{display:none;}
+  @media (hover:hover){
+    #panel-colaboradores .task-item .icon-btn:not(.mail-selected){opacity:0;transition:opacity .15s;}
+    #panel-colaboradores .task-item:hover .icon-btn{opacity:1;}
+  }
+
+  /* ==== v2: Reunión con Javier ==== */
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+  .page-head h2{font-family:'Poppins',sans-serif;font-size:19px;font-weight:600;margin:0;}
+  .page-head .page-sub{font-size:13px;color:var(--text-secondary);margin-top:2px;}
+  .page-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  #javierWeekTabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;background:transparent;padding:0 0 4px;gap:4px;margin-bottom:18px;}
+  #javierWeekTabs::-webkit-scrollbar{display:none;}
+  #javierWeekTabs{-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent);padding-right:40px;}
+  #javierWeekTabs button{border:1px solid transparent;border-radius:999px;padding:7px 14px;color:var(--text-secondary);}
+  #javierWeekTabs button:hover:not(.active){background:var(--card);color:var(--text-primary);}
+  #javierWeekTabs button.active{background:var(--card);color:var(--accent);border-color:var(--border);box-shadow:0 1px 3px rgba(20,20,15,.08);}
+  #javierWeekTabs button.is-current:not(.active)::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:middle;}
+  #javierWeekTabs button.subnav-history-toggle{border:1px dashed var(--border);border-radius:999px;}
+  .wk-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start;}
+  .wk-grid > .wk-card:first-child{grid-column:1 / -1;}
+  @media (max-width:1000px){ .wk-grid{grid-template-columns:minmax(0,1fr);} }
+  .wk-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:16px 18px;}
+  .wk-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+  .wk-card-title{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-secondary);margin:0;}
+  .wk-card-title .wk-count{font-size:11.5px;letter-spacing:0;color:var(--text-secondary);background:var(--pill-track);border-radius:999px;padding:1px 8px;}
+  .wk-card .priority-list{margin-bottom:0;gap:6px;}
+  .wk-card .priority-row{border-color:transparent;background:var(--bg);}
+  .wk-card .priority-row:hover{border-color:var(--border);}
+  .wk-card .weekly-mail-rows{gap:6px;margin-top:0;}
+  .wk-card .weekly-mail-row{border:1px solid transparent;background:var(--bg);border-radius:var(--radius-md);padding:8px 10px 8px;}
+  .wk-card .weekly-mail-row:hover, .wk-card .weekly-mail-row:focus-within{border-color:var(--border);background:var(--card);}
+  .wk-card .weekly-mail-row-head input[type=text], .wk-card textarea.weekly-estado-input{background:transparent;border-color:transparent;}
+  .wk-card .weekly-mail-row-head input[type=text]{font-size:13.5px;}
+  .wk-card .weekly-mail-row-head input[type=text]{min-width:0;width:100%;}
+  .wk-card .weekly-mail-row-head .icon-btn{flex-shrink:0;}
+  @media (max-width:560px){
+    #panel-colaboradores .task-main{flex-wrap:wrap;}
+    #panel-colaboradores .task-body{flex-basis:calc(100% - 32px);}
+    #panel-colaboradores .task-main > .icon-btn{opacity:1 !important;}
+    #panel-colaboradores .task-main > .icon-btn:first-of-type{margin-left:32px;}
+    .collab-sidebar{width:100%;}
+  }
+  .wk-card .weekly-mail-row-head input[type=text]:focus, .wk-card textarea.weekly-estado-input:focus{background:var(--card);border-color:var(--accent);outline:none;}
+  .wk-card textarea.weekly-estado-input{color:var(--text-secondary);margin-left:0;width:100%;}
+  .wk-card .weekly-mail-row .icon-btn{opacity:.5;}
+  .wk-card .weekly-mail-row:hover .icon-btn{opacity:1;}
+  .wk-card .empty-state{padding:14px 8px;font-size:13px;}
+  .sem-pill{display:inline-flex;align-items:center;gap:6px;border:none;border-radius:999px;padding:3px 9px 3px 8px;font:600 11.5px 'Inter',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+  .sem-pill::before{content:"";width:7px;height:7px;border-radius:50%;}
+  .sem-pill.verde{background:var(--green-soft);color:var(--green-ink);} .sem-pill.verde::before{background:var(--green);}
+  .sem-pill.amarillo{background:var(--amber-soft);color:var(--amber-ink);} .sem-pill.amarillo::before{background:var(--amber);}
+  .sem-pill.rojo{background:var(--red-soft);color:var(--red-ink);} .sem-pill.rojo::before{background:var(--red);}
+  .sem-pill:hover{filter:brightness(.97);}
 </style>
 </head>
 <body>
@@ -561,8 +710,15 @@
 <button class="backup-fab" onclick="exportBackup()" title="Descargar backup (.json)">⬇</button>
 <div class="wrap">
   <header>
-    <h1>Foco del día</h1>
-    <div class="date" id="todayDate"></div>
+    <div>
+      <p class="eyebrow" id="todayDate"></p>
+      <h1>Foco del día</h1>
+      <div class="date" id="daySummary"></div>
+    </div>
+    <div class="day-progress" id="dayProgress" style="display:none;">
+      <svg class="ring" viewBox="0 0 44 44" aria-hidden="true"><circle class="trk" cx="22" cy="22" r="18"/><circle class="val" id="dayRing" cx="22" cy="22" r="18" stroke-dasharray="113.1" stroke-dashoffset="113.1"/></svg>
+      <div><div class="dp-num" id="dayProgressNum"></div><div class="dp-lbl">prioridades de la semana</div></div>
+    </div>
   </header>
 
   <div class="backup-bar">
@@ -648,6 +804,10 @@
 
   <!-- AGENDA (tareas + proyectos + métricas, todo en la misma hoja) -->
   <section class="panel active" id="panel-agenda">
+   <div class="agenda-grid">
+   <div class="agenda-main">
+
+    <div class="focus" id="focusCard" style="display:none;"></div>
 
     <div class="agenda-section" id="sec-tareas">
       <div class="section-head">
@@ -710,6 +870,8 @@
       <div class="task-list" id="projGrid"></div>
     </div>
 
+   </div><!-- /agenda-main -->
+   <aside class="agenda-side">
     <div class="agenda-section" id="sec-metricas">
       <div class="section-head">
         <h2>Métricas rápidas</h2>
@@ -717,7 +879,8 @@
       </div>
       <div class="metrics-grid" id="metricsGrid"></div>
     </div>
-
+   </aside>
+   </div><!-- /agenda-grid -->
   </section>
 
   <!-- COLABORADORES -->
@@ -761,11 +924,16 @@
   <section class="panel" id="panel-reunionjavier">
 
     <div class="agenda-section" id="sec-javier-weekly">
-      <div class="section-head">
-        <h3 style="font-family:'Poppins',sans-serif;font-size:15.5px;font-weight:600;margin:0;">Seguimiento semanal</h3>
-        <button class="btn-ghost" onclick="copyJavierWeekForward()" title="Copia todo el contenido de esta semana (prioridades, riesgos, necesito, avances) tal cual a la semana siguiente, para no tener que volver a escribirlo">➡️ Copiar a la semana siguiente</button>
-        <button class="btn-ghost" onclick="copyJavierWeekRich()" title="Copia el resumen de la semana con el mismo formato de la pantalla, listo para pegar en mail, Teams, OneNote, etc.">📋 Copiar resumen</button>
-        <button class="btn-ghost" onclick="publishJavierSnapshot()" title="Publica el resumen de esta semana en el link de solo lectura para Javier">🔗 Publicar para Javier</button>
+      <div class="page-head">
+        <div>
+          <h2>Seguimiento semanal</h2>
+          <div class="page-sub" id="javierWeekSummary"></div>
+        </div>
+        <div class="page-actions">
+          <button class="btn-secondary" onclick="copyJavierWeekForward()" title="Copia todo el contenido de esta semana (prioridades, riesgos, necesito, avances) tal cual a la semana siguiente, para no tener que volver a escribirlo">→ Copiar a la semana siguiente</button>
+          <button class="btn-secondary" onclick="copyJavierWeekRich()" title="Copia el resumen de la semana con el mismo formato de la pantalla, listo para pegar en mail, Teams, OneNote, etc.">⧉ Copiar resumen</button>
+          <button class="btn-add" onclick="publishJavierSnapshot()" title="Publica el resumen de esta semana en el link de solo lectura para Javier">↗ Publicar para Javier</button>
+        </div>
       </div>
       <nav class="subnav" id="javierWeekTabs" role="tablist"></nav>
       <div id="javierWeekTables"></div>
@@ -1396,6 +1564,8 @@ save();
 function save() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
   scheduleSyncPush();
+  try { renderFocus(); } catch(e) {}
+  try { refreshCollabMeta(); } catch(e) {}
 }
 
 // ---- Sincronización con OneDrive ----
@@ -1732,7 +1902,7 @@ document.querySelectorAll('nav.tabs > button').forEach(btn => {
 });
 
 // ---- Date ----
-document.getElementById('todayDate').textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
 
 // ---- Modals (Métrica / Colaborador) ----
 function openModal(id){ document.getElementById(id).classList.add('active'); }
@@ -1910,6 +2080,8 @@ function renderIndicadores(){
         <span class="semaforo-dot semaforo-${sem}" title="${SEMAFORO_LABEL[sem]}"></span>
       </div>
       <div class="m-value">${escapeHtml(ind.valor || '—')} <span class="m-unit">${escapeHtml(ind.unidad)}</span></div>
+      ${indicadorMeterHtml(ind, sem)}
+      <span class="ind-status ${sem}">${SEMAFORO_LABEL[sem]}</span>
       ${ind.meta ? `<div class="indicator-meta">Meta: ${escapeHtml(ind.meta)} ${escapeHtml(ind.unidad)} (${ind.direccion === 'menor_mejor' ? 'cuanto más bajo, mejor' : 'cuanto más alto, mejor'})</div>` : ''}
       <div class="indicator-footer">
         ${ind.fuente ? `<div>📎 ${escapeHtml(ind.fuente)}</div>` : ''}
@@ -2474,12 +2646,16 @@ function deleteCollaborator(id){
 
 function renderCollabSidebar(){
   const el = document.getElementById('collabSidebar');
-  const itemsHtml = data.collaborators.map(c => `
+  const itemsHtml = data.collaborators.map(c => {
+    const st = collabTaskStats(c);
+    return `
     <div class="collab-sidebar-item ${c.id === selectedCollabId ? 'active' : ''}" onclick="selectCollaborator('${c.id}')">
-      <span>${escapeHtml(c.name)}</span>
+      <span class="cs-avatar">${escapeHtml(collabInitials(c.name))}</span>
+      <span class="cs-name">${escapeHtml(c.name)}</span>
+      ${st.open ? `<span class="cs-count ${st.late ? 'late' : ''}" title="${st.open} abiertas${st.late ? ', ' + st.late + ' vencidas' : ''}">${st.open}</span>` : ''}
       <button class="collab-del-btn" onclick="event.stopPropagation(); deleteCollaborator('${c.id}')" title="Eliminar">✕</button>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
   el.innerHTML = itemsHtml + `
     <div class="collab-add-row">
       <input type="text" id="newCollabName" placeholder="Nuevo colaborador..." onkeydown="if(event.key==='Enter') addCollaborator()">
@@ -2505,7 +2681,8 @@ function renderCollabContent(){
     document.getElementById('collabTaskList').innerHTML = '';
     return;
   }
-  titleEl.textContent = c.name;
+  const st = collabTaskStats(c);
+  titleEl.innerHTML = `${escapeHtml(c.name)}<div class="collab-summary">${st.open ? `${st.open} ${st.open === 1 ? 'tarea abierta' : 'tareas abiertas'}` : 'Sin tareas abiertas'}${st.late ? ` · <b>${st.late} ${st.late === 1 ? 'vencida' : 'vencidas'}</b>` : ''}</div>`;
   toggleBtn.style.display = '';
   renderCollabTasks();
 }
@@ -2989,11 +3166,11 @@ function renderJavierWeeklyPrioridadesCard(){
         <button class="icon-btn" onclick="deleteJavierPriority('${p.id}')" title="Eliminar">✕</button>
       </div>
     </div>
-  `).join('') : `<div class="empty-state" style="padding:18px 8px;">Todavía no cargaste prioridades para esta semana.</div>`;
+  `).join('') : `<div class="empty-state">Todavía no cargaste prioridades para esta semana.</div>`;
   return `
-    <div class="task-form-card">
-      <div class="section-head" style="margin-bottom:6px;">
-        <h4 style="font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:600;margin:0;">PRIORIDADES PARA LA REUNIÓN</h4>
+    <div class="wk-card">
+      <div class="wk-card-head">
+        <h4 class="wk-card-title">Prioridades para la reunión${total ? `<span class="wk-count">${list.filter(p => p.hecho).length}/${total}</span>` : ''}</h4>
         <button class="btn-ghost" onclick="addJavierWeeklyPriority()">+ Agregar</button>
       </div>
       <div class="priority-list">${rowsHtml}</div>
@@ -3173,10 +3350,11 @@ function renderJavierWeeklyTabs(){
       `).join('');
     }
   }
-  html += keys.map(key => `
-    <button class="${key === selectedJavierWeekKey ? 'active' : ''}" onclick="selectJavierWeek('${key}')">${formatJavierWeekTabLabel(key)}</button>
+  html += keys.map((key, i) => `
+    <button class="${key === selectedJavierWeekKey ? 'active' : ''} ${i === 0 ? 'is-current' : ''}" onclick="selectJavierWeek('${key}')" ${i === 0 ? 'title="Semana actual"' : ''}>${formatJavierWeekTabLabel(key)}</button>
   `).join('');
   nav.innerHTML = html;
+  const act = nav.querySelector('button.active'); if (act && act.scrollIntoView) { try { nav.scrollLeft = act.offsetLeft - 8; } catch(e){} }
 }
 
 // Publica un snapshot de solo lectura para Javier: arma el JSON de la semana actual,
@@ -3216,7 +3394,7 @@ function renderJavierWeeklySectionTable(section, label){
   const rowsHtml = rows.length ? rows.map(r => `
     <div class="weekly-mail-row">
       <div class="weekly-mail-row-head">
-        <span class="semaforo-dot semaforo-${r.semaforo}" style="cursor:pointer;" onclick="cycleJavierWeeklySemaforo('${section}','${r.id}')" title="Click para cambiar el semáforo"></span>
+        <button class="sem-pill ${r.semaforo}" onclick="cycleJavierWeeklySemaforo('${section}','${r.id}')" title="Click para cambiar el semáforo">${WK_SEM_LABEL[r.semaforo] || r.semaforo}</button>
         <input type="text" value="${escapeAttr(r.avance)}" placeholder="Avance..." onchange="updateJavierWeeklyField('${section}','${r.id}','avance',this.value)">
         <button class="icon-btn" onclick="deleteJavierWeeklyRow('${section}','${r.id}')">✕</button>
       </div>
@@ -3227,12 +3405,13 @@ function renderJavierWeeklySectionTable(section, label){
           >${escapeHtml(r.estado)}</textarea>
       ${renderJavierAttachments(section, r)}
     </div>
-  `).join('') : `<div class="empty-state" style="padding:18px 8px;">(sin datos)</div>`;
+  `).join('') : `<div class="empty-state">Nada cargado esta semana.</div>`;
+  const open = rows.filter(r => r.semaforo !== 'verde').length;
   return `
-    <div class="task-form-card">
-      <div class="section-head" style="margin-bottom:6px;">
-        <h4 style="font-family:'Poppins',sans-serif;font-size:13.5px;font-weight:600;margin:0;">${label.toUpperCase()}</h4>
-        <button class="btn-ghost" onclick="addJavierWeeklyRow('${section}')">+ Agregar fila</button>
+    <div class="wk-card">
+      <div class="wk-card-head">
+        <h4 class="wk-card-title">${escapeHtml(label)}${rows.length ? `<span class="wk-count">${rows.length}</span>` : ''}</h4>
+        <button class="btn-ghost" onclick="addJavierWeeklyRow('${section}')">+ Agregar</button>
       </div>
       <div class="weekly-mail-rows">${rowsHtml}</div>
     </div>
@@ -3242,8 +3421,9 @@ function renderJavierWeeklySectionTable(section, label){
 function renderJavierWeeklyTables(){
   const el = document.getElementById('javierWeekTables');
   if (!el) return;
-  el.innerHTML = renderJavierWeeklyPrioridadesCard() +
-    JAVIER_WEEKLY_SECTIONS.map(s => renderJavierWeeklySectionTable(s.key, s.label)).join('');
+  el.innerHTML = '<div class="wk-grid">' + renderJavierWeeklyPrioridadesCard() +
+    JAVIER_WEEKLY_SECTIONS.map(s => renderJavierWeeklySectionTable(s.key, s.label)).join('') + '</div>';
+  renderJavierWeekSummary();
   el.querySelectorAll('textarea.weekly-estado-input').forEach(autoGrowTextarea);
 }
 
@@ -4286,6 +4466,101 @@ document.querySelectorAll('#panel-vida nav.subnav > button').forEach(btn => {
   });
 });
 
+
+// ---- Rediseño v2: tarjeta de foco, resumen del día y barra de indicadores ----
+function indicadorMeterHtml(ind, sem){
+  const num = (x) => parseFloat(String(x).replace(',', '.').replace(/[^0-9.\-]/g, ''));
+  const v = num(ind.valor), m = num(ind.meta);
+  if (isNaN(v) || isNaN(m) || m <= 0 || v < 0) return '';
+  const max = Math.max(v, m) * 1.15;
+  return `<div class="ind-meter" title="Meta: ${escapeAttr(String(ind.meta))}"><span class="${sem}" style="width:${(v/max*100).toFixed(1)}%"></span><i style="left:${(m/max*100).toFixed(1)}%"></i></div>`;
+}
+function localISODate(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
+function currentWeekPriorities(){
+  const all = data.javierWeekly || {};
+  const key = weekKey(getWeekStart(new Date()));
+  if (all[key]) return all[key].prioridades || [];
+  // Semana todavía sin abrir: mostramos lo que quedaría heredado (pendientes de la última semana con datos)
+  const prev = Object.keys(all).filter(k => k < key).sort().pop();
+  return prev ? (all[prev].prioridades || []).filter(p => !p.hecho) : [];
+}
+function renderFocus(){
+  const prios = currentWeekPriorities();
+  const total = prios.length, done = prios.filter(p => p.hecho).length;
+
+  const dp = document.getElementById('dayProgress');
+  if (dp){
+    dp.style.display = total ? '' : 'none';
+    if (total){
+      document.getElementById('dayProgressNum').textContent = `${done} de ${total}`;
+      document.getElementById('dayRing').setAttribute('stroke-dashoffset', (113.1 * (1 - done/total)).toFixed(1));
+    }
+  }
+
+  const today = localISODate(new Date());
+  const open = (data.tasks || []).filter(t => !t.done);
+  const late = open.filter(t => t.due && t.due < today).length;
+  const h = new Date().getHours();
+  const saludo = h < 13 ? 'Buen día' : (h < 20 ? 'Buenas tardes' : 'Buenas noches');
+  let resumen = `${saludo}, Martín.`;
+  if (open.length) resumen += ` Tenés ${open.length} ${open.length === 1 ? 'tarea abierta' : 'tareas abiertas'}` + (late ? ` y ${late} ${late === 1 ? 'vencida' : 'vencidas'}.` : '.');
+  else resumen += ' No tenés tareas abiertas.';
+  const ds = document.getElementById('daySummary'); if (ds) ds.textContent = resumen;
+
+  const el = document.getElementById('focusCard');
+  if (!el) return;
+  const idx = prios.findIndex(p => !p.hecho);
+  if (idx === -1){ el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = '';
+  el.innerHTML = `
+    <p class="focus-eyebrow">Prioridad #${idx+1} de la semana</p>
+    <h3>${escapeHtml(prios[idx].texto || 'Sin título')}</h3>
+    <div class="focus-foot">
+      <div class="focus-bar"><span style="width:${(done/total*100).toFixed(0)}%"></span></div>
+      <span class="focus-meta">${done} de ${total} prioridades hechas</span>
+      <button class="btn-light" onclick="document.querySelector('nav.tabs button[data-tab=\\'reunionjavier\\']').click()">Ver reunión</button>
+    </div>`;
+}
+
+
+// ---- v2: helpers de Colaboradores y Reunión con Javier ----
+const WK_SEM_LABEL = { verde: 'OK', amarillo: 'Atención', rojo: 'Crítico' };
+function collabInitials(name){
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length-1][0] : '')).toUpperCase();
+}
+function collabTaskStats(c){
+  const today = localISODate(new Date());
+  const open = (c.tasks || []).filter(t => !t.done);
+  return { open: open.length, late: open.filter(t => t.due && t.due < today).length };
+}
+// Refresca conteos del sidebar y el resumen bajo el nombre sin tocar la lista de tareas
+function refreshCollabMeta(){
+  if (!document.getElementById('collabSidebar')) return;
+  const typing = document.activeElement && document.activeElement.id === 'newCollabName';
+  if (!typing) renderCollabSidebar();
+  const c = data.collaborators.find(x => x.id === selectedCollabId);
+  const titleEl = document.getElementById('collabContentTitle');
+  if (c && titleEl){
+    const st = collabTaskStats(c);
+    titleEl.innerHTML = `${escapeHtml(c.name)}<div class="collab-summary">${st.open ? `${st.open} ${st.open === 1 ? 'tarea abierta' : 'tareas abiertas'}` : 'Sin tareas abiertas'}${st.late ? ` · <b>${st.late} ${st.late === 1 ? 'vencida' : 'vencidas'}</b>` : ''}</div>`;
+  }
+}
+function renderJavierWeekSummary(){
+  const el = document.getElementById('javierWeekSummary');
+  if (!el || !selectedJavierWeekKey) return;
+  const b = data.javierWeekly[selectedJavierWeekKey] || {};
+  const pr = b.prioridades || [];
+  const start = new Date(selectedJavierWeekKey + 'T00:00:00');
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const f = d => d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }).replace('.', '');
+  const criticos = ['riesgos','necesito','avances'].reduce((n, k) => n + (b[k] || []).filter(r => r.semaforo === 'rojo').length, 0);
+  let txt = `${formatJavierWeekTabLabel(selectedJavierWeekKey)} · ${f(start)} al ${f(end)}`;
+  if (pr.length) txt += ` · ${pr.filter(p => p.hecho).length} de ${pr.length} prioridades hechas`;
+  if (criticos) txt += ` · ${criticos} ${criticos === 1 ? 'tema crítico' : 'temas críticos'}`;
+  el.textContent = txt;
+}
+
 // ---- Init ----
 document.getElementById('coachQuestion').textContent = currentQuestion;
 populateTaskProjSelects();
@@ -4293,6 +4568,7 @@ renderProjects();
 renderTasks();
 renderMetrics();
 renderIndicadores();
+renderFocus();
 selectedCollabId = data.collaborators.length ? data.collaborators[0].id : null;
 renderCollabSidebar();
 renderCollabContent();
