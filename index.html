@@ -702,6 +702,28 @@
   .sem-pill.amarillo{background:var(--amber-soft);color:var(--amber-ink);} .sem-pill.amarillo::before{background:var(--amber);}
   .sem-pill.rojo{background:var(--red-soft);color:var(--red-ink);} .sem-pill.rojo::before{background:var(--red);}
   .sem-pill:hover{filter:brightness(.97);}
+
+  /* ==== v2.1: subtareas legibles en columnas angostas ==== */
+  .subtasks{padding-left:0;margin-top:12px;gap:10px;}
+  .subtask-row{align-items:flex-start;gap:10px;}
+  .subtask-row .subtask-check{margin-top:2px;}
+  .subtask-main{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:flex-start;column-gap:12px;row-gap:4px;}
+  .subtask-text{flex:1 1 260px;min-width:0;line-height:1.45;}
+  .subtask-meta{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .subtask-row .subtask-del{padding:0 2px;}
+  .toggle-subtasks, .subtask-folder-toggle{padding-left:0;}
+  @media (max-width:560px){
+    #panel-agenda .task-main{flex-wrap:wrap;}
+    #panel-agenda .task-body{flex-basis:calc(100% - 32px);}
+    #panel-agenda .task-main > .icon-btn{opacity:1 !important;}
+    #panel-agenda .task-main > .icon-btn:first-of-type{margin-left:32px;}
+  }
+  @media (hover:hover){
+    #panel-agenda .task-main > .icon-btn{opacity:0;transition:opacity .15s;}
+    #panel-agenda .task-item:hover .task-main > .icon-btn{opacity:1;}
+    .subtask-row .subtask-del{opacity:0;transition:opacity .15s;}
+    .subtask-row:hover .subtask-del{opacity:1;}
+  }
 </style>
 </head>
 <body>
@@ -2356,11 +2378,14 @@ function renderProjectItem(p){
     return `
     <div class="subtask-row">
       <div class="subtask-check ${s.done ? 'done' : ''}" onclick="toggleProjectSubtask('${p.id}','${s.id}')">${s.done ? '✓' : ''}</div>
+      <div class="subtask-main">
       <div class="subtask-text ${s.done ? 'done' : ''}">${escapeHtml(s.text)}</div>
+      <div class="subtask-meta">
       <span class="estado-badge estado-${s.estado || 'no_iniciado'}" onclick="cycleProjectSubtaskEstado('${p.id}','${s.id}')" title="Click para cambiar el estado">${estadoLabel(s.estado)}</span>
       ${s.due ? `<span class="subtask-due-badge ${subtaskDueClass(s.due)}">${fmtDate(s.due)}</span>` : ''}
       <button class="subtask-del" onclick="startEditProjectSubtask('${p.id}','${s.id}')" title="Editar">✎</button>
       <button class="subtask-del" onclick="deleteProjectSubtask('${p.id}','${s.id}')" title="Eliminar">✕</button>
+      </div></div>
     </div>`;
   };
 
@@ -2927,10 +2952,13 @@ function renderCollabTaskItem(t){
     return `
     <div class="subtask-row">
       <div class="subtask-check ${s.done ? 'done' : ''}" onclick="toggleCollabSubtask('${t.id}','${s.id}')">${s.done ? '✓' : ''}</div>
+      <div class="subtask-main">
       <div class="subtask-text ${s.done ? 'done' : ''}">${escapeHtml(s.text)}</div>
+      <div class="subtask-meta">
       ${s.due ? `<span class="subtask-due-badge ${subtaskDueClass(s.due)}">${fmtDate(s.due)}</span>` : ''}
       <button class="subtask-del" onclick="startEditCollabSubtask('${t.id}','${s.id}')" title="Editar">✎</button>
       <button class="subtask-del" onclick="deleteCollabSubtask('${t.id}','${s.id}')" title="Eliminar">✕</button>
+      </div></div>
     </div>`;
   };
 
@@ -4286,10 +4314,13 @@ function renderTvTaskItem(t){
     }
     return `<div class="subtask-row">
       <div class="subtask-check ${s.done ? 'done' : ''}" onclick="toggleTvSubtask('${t.id}','${s.id}')">${s.done ? '✓' : ''}</div>
+      <div class="subtask-main">
       <div class="subtask-text ${s.done ? 'done' : ''}">${escapeHtml(s.text)}</div>
+      <div class="subtask-meta">
       ${s.due ? `<span class="subtask-due-badge ${subtaskDueClass(s.due)}">${fmtDate(s.due)}</span>` : ''}
       <button class="subtask-del" onclick="startEditTvSubtask('${t.id}','${s.id}')" title="Editar">✎</button>
       <button class="subtask-del" onclick="deleteTvSubtask('${t.id}','${s.id}')" title="Eliminar">✕</button>
+      </div></div>
     </div>`;
   };
   return `
