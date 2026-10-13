@@ -806,6 +806,16 @@
   .prio-grid span.priority-rank{display:flex;align-items:center;justify-content:center;}
   .prio-c-fecha .sem-pill{margin:4px 0 0 6px;}
   .prio-grid .prio-sort-hint{font-weight:400;color:var(--text-secondary);font-family:'Inter',sans-serif;font-size:11.5px;margin-left:6px;}
+
+  /* ==== v2.5: responsable de la prioridad ==== */
+  .prio-owner{display:flex;align-items:center;gap:6px;margin:4px 0 0 6px;background:var(--accent-soft);border:1px solid transparent;border-radius:999px;padding:2px 4px 2px 8px;max-width:100%;width:fit-content;}
+  .prio-owner::before{content:"👤";font-size:11px;line-height:1;}
+  .prio-grid .prio-owner input{border:none !important;background:transparent !important;padding:1px 4px !important;font:600 12px 'Inter',sans-serif !important;color:var(--accent) !important;width:120px;min-width:0;text-decoration:none !important;}
+  .prio-grid .prio-owner input::placeholder{color:var(--text-secondary);font-weight:500;}
+  .prio-owner:focus-within{border-color:var(--accent);background:var(--card);}
+  .prio-owner.empty{background:transparent;border:1px dashed var(--border);}
+  .owner-chip{display:inline-flex;align-items:center;gap:5px;margin-top:4px;font-size:11.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 9px;}
+  .owner-chip::before{content:"👤";font-size:10px;}
 </style>
 </head>
 <body>
@@ -3174,7 +3184,7 @@ function toggleJavierPastWeeks(){
 // ---- Prioridades para la reunión con Javier (una lista por semana, dentro de Seguimiento semanal) ----
 function addJavierWeeklyPriority(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
-  bucket.prioridades.push({ id: cid(), texto: '', tarea: '', entregable: '', fecha: '', semaforo: 'verde', hecho: false });
+  bucket.prioridades.push({ id: cid(), texto: '', tarea: '', entregable: '', fecha: '', responsable: '', semaforo: 'verde', hecho: false });
   save();
   renderJavierWeeklyTables();
 }
@@ -3202,7 +3212,7 @@ function updateJavierPriorityText(id, val){
 }
 
 function updateJavierPriorityField(id, field, val){
-  if (!['texto','tarea','entregable','fecha'].includes(field)) return;
+  if (!['texto','tarea','entregable','fecha','responsable'].includes(field)) return;
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const p = bucket.prioridades.find(x => x.id === id);
   if (p) p[field] = val;
@@ -3304,6 +3314,7 @@ function renderJavierWeeklyPrioridadesCard(){
       <div class="prio-cell"><div class="prio-lbl">Tareas concretas</div><textarea rows="1" placeholder="Tareas concretas..." oninput="autoGrowTextarea(this)" onchange="updateJavierPriorityField('${p.id}','tarea', this.value)">${escapeHtml(p.tarea || '')}</textarea></div>
       <div class="prio-cell"><div class="prio-lbl">Entregable</div><textarea rows="1" placeholder="Entregable..." oninput="autoGrowTextarea(this)" onchange="updateJavierPriorityField('${p.id}','entregable', this.value)">${escapeHtml(p.entregable || '')}</textarea></div>
       <div class="prio-cell prio-c-fecha"><div class="prio-lbl">Horizonte</div><input type="date" value="${escapeAttr(p.fecha || '')}" onchange="updateJavierPriorityField('${p.id}','fecha', this.value)">
+        <label class="prio-owner ${p.responsable ? '' : 'empty'}" title="Responsable"><input type="text" list="prioOwnerList" placeholder="Asignar a…" value="${escapeAttr(p.responsable || '')}" oninput="this.parentNode.classList.toggle('empty', !this.value)" onchange="updateJavierPriorityField('${p.id}','responsable', this.value.trim())"></label>
         <button class="sem-pill ${p.semaforo || 'verde'}" onclick="cycleJavierPrioritySemaforo('${p.id}')" title="Click para cambiar el semáforo">${WK_SEM_LABEL[p.semaforo || 'verde']}</button></div>
       <div class="priority-actions">
         <button class="icon-btn" onclick="deleteJavierPriority('${p.id}')" title="Eliminar">✕</button>
@@ -3316,6 +3327,7 @@ function renderJavierWeeklyPrioridadesCard(){
         <h4 class="wk-card-title">Prioridades para la reunión${total ? `<span class="wk-count">${list.filter(p => p.hecho).length}/${total}</span>` : ''}</h4>
         <button class="btn-ghost" onclick="addJavierWeeklyPriority()">+ Agregar</button>
       </div>
+      <datalist id="prioOwnerList">${(data.collaborators || []).map(c => `<option value="${escapeAttr(c.name)}">`).join('')}</datalist>
       <div class="priority-list prio-table">
         ${list.length ? '<div class="prio-head"><span>#</span><span>Tema</span><span>Tareas concretas</span><span>Entregable</span><span>Horizonte ↑</span><span></span></div>' : ''}
         ${rowsHtml}
@@ -3777,6 +3789,7 @@ function copyJavierWeekRich(){
       if (p.tarea && p.tarea.trim()) text += `   Tareas: ${p.tarea.replace(/\n/g, '\n   ')}\n`;
       if (p.entregable && p.entregable.trim()) text += `   Entregable: ${p.entregable.replace(/\n/g, '\n   ')}\n`;
       if (p.fecha) text += `   Horizonte: ${fmtPrioFecha(p.fecha)}\n`;
+      if (p.responsable) text += `   Responsable: ${p.responsable}\n`;
       text += `   Estado: ${semaforoTxt[p.semaforo || 'verde']} ${WK_SEM_LABEL[p.semaforo || 'verde']}\n`;
     });
   } else {
@@ -3810,7 +3823,7 @@ function copyJavierWeekRich(){
     html += `<table style="border-collapse:collapse;width:100%;margin:0;"><tr><th ${th}>#</th><th ${th}>Tema</th><th ${th}>Tareas concretas</th><th ${th}>Entregable</th><th ${th}>Horizonte</th></tr>`;
     bucket.prioridades.forEach((p, i) => {
       const d = p.hecho;
-      html += `<tr><td ${td(d)}>${i + 1}</td><td ${td(d)}><b>${esc(p.texto || '(sin tema)')}</b>${d ? ' <i>(hecho)</i>' : ''}</td><td ${td(d)}>${nl(p.tarea)}</td><td ${td(d)}>${nl(p.entregable)}</td><td ${td(d)}>${p.fecha ? esc(fmtPrioFecha(p.fecha)) : ''}<br><span style="display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;${PRIO_SEM_STYLE[p.semaforo || 'verde']}">${WK_SEM_LABEL[p.semaforo || 'verde']}</span></td></tr>`;
+      html += `<tr><td ${td(d)}>${i + 1}</td><td ${td(d)}><b>${esc(p.texto || '(sin tema)')}</b>${d ? ' <i>(hecho)</i>' : ''}</td><td ${td(d)}>${nl(p.tarea)}</td><td ${td(d)}>${nl(p.entregable)}</td><td ${td(d)}>${p.fecha ? esc(fmtPrioFecha(p.fecha)) : ''}${p.responsable ? `<br><span style="display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;background:#E2E9EE;color:#3D5A73;">${esc(p.responsable)}</span>` : ''}<br><span style="display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;${PRIO_SEM_STYLE[p.semaforo || 'verde']}">${WK_SEM_LABEL[p.semaforo || 'verde']}</span></td></tr>`;
     });
     html += `</table>`;
   } else {
@@ -4711,7 +4724,7 @@ function javierWeekRange(key){
 }
 function javierHistText(b){
   const parts = [];
-  (b.prioridades || []).forEach(p => parts.push(p.texto, p.tarea, p.entregable));
+  (b.prioridades || []).forEach(p => parts.push(p.texto, p.tarea, p.entregable, p.responsable));
   JAVIER_WEEKLY_SECTIONS.forEach(sec => (b[sec.key] || []).forEach(r => parts.push(r.avance, r.estado)));
   return parts.filter(Boolean).join(' ').toLowerCase();
 }
@@ -4790,7 +4803,7 @@ function renderJavierHistoryList(){
 
     const prioHtml = pr.length ? `
       <table class="hist-table"><thead><tr><th>#</th><th>Tema</th><th>Tareas concretas</th><th>Entregable</th><th>Horizonte</th></tr></thead><tbody>
-      ${pr.map((p, i) => `<tr class="${p.hecho ? 'done' : ''}"><td class="n">${i + 1}</td><td class="t">${hlText(p.texto || '(sin tema)')}</td><td data-l="Tareas">${hlText(p.tarea)}</td><td data-l="Entregable">${hlText(p.entregable)}</td><td class="f" data-l="Horizonte">${p.fecha ? escapeHtml(fmtPrioFecha(p.fecha)) : ''}<div><span class="sem-pill ${p.semaforo || 'verde'}" style="margin-top:4px">${WK_SEM_LABEL[p.semaforo || 'verde']}</span></div></td></tr>`).join('')}
+      ${pr.map((p, i) => `<tr class="${p.hecho ? 'done' : ''}"><td class="n">${i + 1}</td><td class="t">${hlText(p.texto || '(sin tema)')}</td><td data-l="Tareas">${hlText(p.tarea)}</td><td data-l="Entregable">${hlText(p.entregable)}</td><td class="f" data-l="Horizonte">${p.fecha ? escapeHtml(fmtPrioFecha(p.fecha)) : ''}${p.responsable ? `<div><span class="owner-chip">${hlText(p.responsable)}</span></div>` : ''}<div><span class="sem-pill ${p.semaforo || 'verde'}" style="margin-top:4px">${WK_SEM_LABEL[p.semaforo || 'verde']}</span></div></td></tr>`).join('')}
       </tbody></table>` : '<div class="hist-empty">Sin prioridades cargadas.</div>';
 
     const secHtml = JAVIER_WEEKLY_SECTIONS.map(sec => {
