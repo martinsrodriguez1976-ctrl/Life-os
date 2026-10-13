@@ -751,6 +751,56 @@
     .prio-grid .priority-actions{grid-column:5;grid-row:1;}
     .prio-grid .prio-cell:not(.prio-c-tema) .prio-lbl{display:block;padding-left:6px;}
   }
+
+  /* ==== v2.3: Historial de semanas (Reunión con Javier) ==== */
+  .view-switch{display:inline-flex;gap:2px;background:var(--pill-track);border-radius:999px;padding:4px;margin-bottom:16px;}
+  .view-switch button{border:none;background:transparent;border-radius:999px;padding:7px 16px;font:600 13.5px 'Inter',sans-serif;color:var(--text-secondary);cursor:pointer;}
+  .view-switch button:hover:not(.active){color:var(--text-primary);}
+  .view-switch button.active{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(20,20,15,.08);}
+  .view-switch .vs-count{font-size:11.5px;background:var(--bg);border-radius:999px;padding:1px 7px;margin-left:6px;color:var(--text-secondary);}
+  .hist-tools{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+  .hist-tools input{flex:1;min-width:200px;max-width:420px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font:14px 'Inter',sans-serif;background:var(--card);}
+  .hist-tools input:focus{outline:none;border-color:var(--accent);}
+  .hist-tools .hist-hint{font-size:12.5px;color:var(--text-secondary);}
+  .hist-list{display:flex;flex-direction:column;gap:12px;}
+  .hist-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);overflow:hidden;}
+  .hist-head{display:flex;align-items:center;gap:14px;padding:14px 18px;cursor:pointer;flex-wrap:wrap;}
+  .hist-head:hover{background:#F8FAFB;}
+  .hist-chev{color:var(--text-secondary);font-size:12px;width:12px;transition:transform .15s;}
+  .hist-card.open .hist-chev{transform:rotate(90deg);}
+  .hist-title{font-family:'Poppins',sans-serif;font-weight:600;font-size:15px;}
+  .hist-dates{font-size:12.5px;color:var(--text-secondary);margin-left:-6px;}
+  .hist-chips{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;}
+  .hist-chip{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;background:var(--pill-track);color:var(--text-secondary);}
+  .hist-chip.ok{background:var(--green-soft);color:var(--green-ink);}
+  .hist-chip.warn{background:var(--amber-soft);color:var(--amber-ink);}
+  .hist-chip.bad{background:var(--red-soft);color:var(--red-ink);}
+  .hist-body{display:none;padding:4px 18px 18px;border-top:1px solid var(--border);}
+  .hist-card.open .hist-body{display:block;}
+  .hist-sec-title{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--text-secondary);margin:16px 0 8px;}
+  .hist-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13.5px;}
+  .hist-table th{text-align:left;font-family:'Poppins',sans-serif;font-weight:600;font-size:12.5px;background:var(--bg);padding:8px 10px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .hist-table th:first-child{border-left:1px solid var(--border);border-radius:10px 0 0 10px;}
+  .hist-table th:last-child{border-right:1px solid var(--border);border-radius:0 10px 10px 0;}
+  .hist-table td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.45;color:var(--text-secondary);}
+  .hist-table td.n{font-weight:600;color:var(--text-primary);width:22px;}
+  .hist-table td.t{font-weight:600;color:var(--text-primary);}
+  .hist-table td.f{white-space:nowrap;}
+  .hist-table tr:last-child td{border-bottom:none;}
+  .hist-table tr.done td{text-decoration:line-through;color:var(--text-tertiary);}
+  .hist-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;}
+  @media (max-width:900px){ .hist-cols{grid-template-columns:minmax(0,1fr);} .hist-table thead{display:none;} .hist-table tr{display:block;padding:8px 0;border-bottom:1px solid var(--border);} .hist-table td{display:block;border:none;padding:2px 0;} .hist-table td[data-l]:not(:empty)::before{content:attr(data-l) ": ";font-weight:600;color:var(--text-secondary);} }
+  .hist-row{background:var(--bg);border-radius:var(--radius-md);padding:8px 10px;margin-bottom:6px;font-size:13.5px;}
+  .hist-row-head{display:flex;gap:8px;align-items:flex-start;}
+  .hist-row-head b{font-weight:600;color:var(--text-primary);}
+  .hist-row .hist-estado{color:var(--text-secondary);white-space:pre-wrap;margin-top:4px;line-height:1.45;}
+  .hist-row .sem-pill{cursor:default;}
+  .hist-att{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+  .hist-att button{border:none;background:var(--card);border-radius:8px;padding:3px 8px;font-size:11.5px;color:var(--accent);cursor:pointer;}
+  .hist-empty{font-size:13px;color:var(--text-secondary);padding:4px 0;}
+  .hist-foot{display:flex;justify-content:flex-end;margin-top:14px;}
+  .hist-none{background:var(--card);border:1px dashed var(--border);border-radius:var(--radius-lg);padding:28px;text-align:center;color:var(--text-secondary);font-size:14px;}
+  mark.hl{background:#F5EDDD;color:inherit;border-radius:3px;padding:0 1px;}
 </style>
 </head>
 <body>
@@ -978,14 +1028,18 @@
           <h2>Seguimiento semanal</h2>
           <div class="page-sub" id="javierWeekSummary"></div>
         </div>
-        <div class="page-actions">
+        <div class="page-actions" id="javierPageActions">
           <button class="btn-secondary" onclick="copyJavierWeekForward()" title="Copia todo el contenido de esta semana (prioridades, riesgos, necesito, avances) tal cual a la semana siguiente, para no tener que volver a escribirlo">→ Copiar a la semana siguiente</button>
           <button class="btn-secondary" onclick="copyJavierWeekRich()" title="Copia el resumen de la semana con el mismo formato de la pantalla, listo para pegar en mail, Teams, OneNote, etc.">⧉ Copiar resumen</button>
           <button class="btn-add" onclick="publishJavierSnapshot()" title="Publica el resumen de esta semana en el link de solo lectura para Javier">↗ Publicar para Javier</button>
         </div>
       </div>
-      <nav class="subnav" id="javierWeekTabs" role="tablist"></nav>
-      <div id="javierWeekTables"></div>
+      <div class="view-switch" id="javierViewSwitch"></div>
+      <div id="javierWeekView">
+        <nav class="subnav" id="javierWeekTabs" role="tablist"></nav>
+        <div id="javierWeekTables"></div>
+      </div>
+      <div id="javierHistoryView" style="display:none;"></div>
     </div>
 
   </section>
@@ -3411,13 +3465,8 @@ function renderJavierWeeklyTabs(){
     selectedJavierWeekKey = keys[0];
   }
   let html = '';
-  if (pastKeys.length){
-    html += `<button class="subnav-history-toggle" onclick="toggleJavierPastWeeks()">${javierPastWeeksOpen ? '📂' : '📁'} Semanas anteriores (${pastKeys.length})</button>`;
-    if (javierPastWeeksOpen){
-      html += pastKeys.map(key => `
-        <button class="${key === selectedJavierWeekKey ? 'active' : ''}" onclick="selectJavierWeek('${key}')">${formatJavierWeekTabLabel(key)}</button>
-      `).join('');
-    }
+  if (pastKeys.includes(selectedJavierWeekKey)){
+    html += `<button class="active" title="Semana anterior abierta desde el historial">${formatJavierWeekTabLabel(selectedJavierWeekKey)} · anterior</button>`;
   }
   html += keys.map((key, i) => `
     <button class="${key === selectedJavierWeekKey ? 'active' : ''} ${i === 0 ? 'is-current' : ''}" onclick="selectJavierWeek('${key}')" ${i === 0 ? 'title="Semana actual"' : ''}>${formatJavierWeekTabLabel(key)}</button>
@@ -3497,6 +3546,8 @@ function renderJavierWeeklyTables(){
 }
 
 function renderJavierWeekly(){
+  renderJavierViewSwitch();
+  if (javierView === 'historial'){ renderJavierHistory(); return; }
   renderJavierWeeklyTabs();
   renderJavierWeeklyTables();
 }
@@ -4600,6 +4651,149 @@ function renderFocus(){
     </div>`;
 }
 
+
+
+// ---- v2.3: Historial de semanas anteriores ----
+let javierView = 'semana';
+let javierHistOpen = {};
+let javierHistQuery = '';
+function setJavierView(v){
+  javierView = v;
+  if (v === 'semana'){
+    const keys = getRemainingJavierWeekKeys();
+    if (!keys.includes(selectedJavierWeekKey)) selectedJavierWeekKey = keys[0];
+  }
+  renderJavierWeekly();
+}
+function renderJavierViewSwitch(){
+  const sw = document.getElementById('javierViewSwitch');
+  if (!sw) return;
+  const n = getPastJavierWeekKeysWithData().length;
+  sw.innerHTML = `
+    <button class="${javierView === 'semana' ? 'active' : ''}" onclick="setJavierView('semana')">Semana en curso</button>
+    <button class="${javierView === 'historial' ? 'active' : ''}" onclick="setJavierView('historial')">Semanas anteriores<span class="vs-count">${n}</span></button>`;
+  const wv = document.getElementById('javierWeekView'), hv = document.getElementById('javierHistoryView'), ac = document.getElementById('javierPageActions');
+  if (wv) wv.style.display = javierView === 'historial' ? 'none' : '';
+  if (hv) hv.style.display = javierView === 'historial' ? '' : 'none';
+  if (ac) ac.style.display = javierView === 'historial' ? 'none' : '';
+}
+function javierWeekRange(key){
+  const start = new Date(key + 'T00:00:00');
+  const end = new Date(start); end.setDate(start.getDate() + 6);
+  const f = d => d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }).replace('.', '');
+  return `${f(start)} al ${f(end)}`;
+}
+function javierHistText(b){
+  const parts = [];
+  (b.prioridades || []).forEach(p => parts.push(p.texto, p.tarea, p.entregable));
+  JAVIER_WEEKLY_SECTIONS.forEach(sec => (b[sec.key] || []).forEach(r => parts.push(r.avance, r.estado)));
+  return parts.filter(Boolean).join(' ').toLowerCase();
+}
+function hlText(t){
+  const safe = escapeHtml(t || '');
+  const q = javierHistQuery.trim();
+  if (!q) return safe.replace(/\n/g, '<br>');
+  const qs = escapeHtml(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return safe.replace(new RegExp(qs, 'gi'), m => `<mark class="hl">${m}</mark>`).replace(/\n/g, '<br>');
+}
+function onJavierHistSearch(v){
+  javierHistQuery = v;
+  renderJavierHistoryList();
+}
+function toggleJavierHistCard(key){
+  javierHistOpen[key] = !javierHistOpen[key];
+  const el = document.querySelector(`.hist-card[data-key="${key}"]`);
+  if (el) el.classList.toggle('open', !!javierHistOpen[key]);
+}
+function openJavierWeekForEdit(key){
+  selectedJavierWeekKey = key;
+  javierView = 'semana';
+  renderJavierWeekly();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function openJavierHistAttachment(key, section, rowId, attId){
+  const b = data.javierWeekly[key];
+  const row = b && b[section] ? b[section].find(r => r.id === rowId) : null;
+  const att = row && row.adjuntos ? row.adjuntos.find(a => a.id === attId) : null;
+  if (!att) return;
+  if (att.esImagen){ showJavierImageLightbox(att.dataUrl, att.nombre); return; }
+  const a = document.createElement('a'); a.href = att.dataUrl; a.download = att.nombre || 'archivo';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function renderJavierHistory(){
+  const hv = document.getElementById('javierHistoryView');
+  if (!hv) return;
+  const keys = getPastJavierWeekKeysWithData();
+  if (!keys.length){
+    hv.innerHTML = '<div class="hist-none">Todavía no hay semanas anteriores con datos. Cuando termine esta semana, la vas a encontrar acá.</div>';
+    const sumEl = document.getElementById('javierWeekSummary'); if (sumEl) sumEl.textContent = 'Historial de seguimiento semanal';
+    return;
+  }
+  if (!Object.keys(javierHistOpen).length) javierHistOpen[keys[0]] = true;
+  hv.innerHTML = `
+    <div class="hist-tools">
+      <input type="search" placeholder="Buscar en semanas anteriores (tema, tarea, riesgo...)" value="${escapeAttr(javierHistQuery)}" oninput="onJavierHistSearch(this.value)">
+      <span class="hist-hint" id="javierHistHint"></span>
+    </div>
+    <div class="hist-list" id="javierHistList"></div>`;
+  const sumEl = document.getElementById('javierWeekSummary');
+  if (sumEl) sumEl.textContent = `Historial · ${keys.length} ${keys.length === 1 ? 'semana con registros' : 'semanas con registros'}`;
+  renderJavierHistoryList();
+}
+function renderJavierHistoryList(){
+  const list = document.getElementById('javierHistList');
+  if (!list) return;
+  const q = javierHistQuery.trim().toLowerCase();
+  const keys = getPastJavierWeekKeysWithData().filter(k => !q || javierHistText(data.javierWeekly[k]).includes(q));
+  const hint = document.getElementById('javierHistHint');
+  if (hint) hint.textContent = q ? `${keys.length} ${keys.length === 1 ? 'semana coincide' : 'semanas coinciden'}` : '';
+  if (!keys.length){ list.innerHTML = '<div class="hist-none">Ninguna semana coincide con la búsqueda.</div>'; return; }
+  list.innerHTML = keys.map(key => {
+    const b = data.javierWeekly[key];
+    const pr = b.prioridades || [];
+    const done = pr.filter(p => p.hecho).length;
+    const crit = JAVIER_WEEKLY_SECTIONS.reduce((n, sec) => n + (b[sec.key] || []).filter(r => r.semaforo === 'rojo').length, 0);
+    const riesgos = (b.riesgos || []).length, necesito = (b.necesito || []).length, avances = (b.avances || []).length;
+    const chips = [];
+    if (pr.length) chips.push(`<span class="hist-chip ${done === pr.length ? 'ok' : (done ? 'warn' : 'bad')}">${done}/${pr.length} prioridades</span>`);
+    if (crit) chips.push(`<span class="hist-chip bad">${crit} ${crit === 1 ? 'crítico' : 'críticos'}</span>`);
+    if (riesgos) chips.push(`<span class="hist-chip">${riesgos} ${riesgos === 1 ? 'riesgo' : 'riesgos'}</span>`);
+    if (necesito) chips.push(`<span class="hist-chip">${necesito} pedido${necesito === 1 ? '' : 's'}</span>`);
+    if (avances) chips.push(`<span class="hist-chip">${avances} ${avances === 1 ? 'avance' : 'avances'}</span>`);
+    const open = q ? true : !!javierHistOpen[key];
+
+    const prioHtml = pr.length ? `
+      <table class="hist-table"><thead><tr><th>#</th><th>Tema</th><th>Tareas concretas</th><th>Entregable</th><th>Horizonte</th></tr></thead><tbody>
+      ${pr.map((p, i) => `<tr class="${p.hecho ? 'done' : ''}"><td class="n">${i + 1}</td><td class="t">${hlText(p.texto || '(sin tema)')}</td><td data-l="Tareas">${hlText(p.tarea)}</td><td data-l="Entregable">${hlText(p.entregable)}</td><td class="f" data-l="Horizonte">${p.fecha ? escapeHtml(fmtPrioFecha(p.fecha)) : ''}</td></tr>`).join('')}
+      </tbody></table>` : '<div class="hist-empty">Sin prioridades cargadas.</div>';
+
+    const secHtml = JAVIER_WEEKLY_SECTIONS.map(sec => {
+      const rows = b[sec.key] || [];
+      return `<div><div class="hist-sec-title">${escapeHtml(sec.label)}</div>${rows.length ? rows.map(r => `
+        <div class="hist-row">
+          <div class="hist-row-head"><span class="sem-pill ${r.semaforo}">${WK_SEM_LABEL[r.semaforo] || r.semaforo}</span><b>${hlText(r.avance || '(sin título)')}</b></div>
+          ${r.estado && r.estado.replace(/[•\s]/g, '') ? `<div class="hist-estado">${hlText(r.estado)}</div>` : ''}
+          ${r.adjuntos && r.adjuntos.length ? `<div class="hist-att">${r.adjuntos.map(a => `<button onclick="openJavierHistAttachment('${key}','${sec.key}','${r.id}','${a.id}')">📎 ${escapeHtml(a.nombre)}</button>`).join('')}</div>` : ''}
+        </div>`).join('') : '<div class="hist-empty">Nada cargado.</div>'}</div>`;
+    }).join('');
+
+    return `
+    <div class="hist-card ${open ? 'open' : ''}" data-key="${key}">
+      <div class="hist-head" onclick="toggleJavierHistCard('${key}')">
+        <span class="hist-chev">▶</span>
+        <span class="hist-title">${formatJavierWeekTabLabel(key)}</span>
+        <span class="hist-dates">· ${javierWeekRange(key)}</span>
+        <span class="hist-chips">${chips.join('')}</span>
+      </div>
+      <div class="hist-body">
+        <div class="hist-sec-title">Prioridades para la reunión</div>
+        ${prioHtml}
+        <div class="hist-cols">${secHtml}</div>
+        <div class="hist-foot"><button class="btn-secondary" onclick="openJavierWeekForEdit('${key}')">✎ Abrir esta semana para editar</button></div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 // ---- v2: helpers de Colaboradores y Reunión con Javier ----
 window.addEventListener('resize', () => {
