@@ -801,6 +801,11 @@
   .hist-foot{display:flex;justify-content:flex-end;margin-top:14px;}
   .hist-none{background:var(--card);border:1px dashed var(--border);border-radius:var(--radius-lg);padding:28px;text-align:center;color:var(--text-secondary);font-size:14px;}
   mark.hl{background:#F5EDDD;color:inherit;border-radius:3px;padding:0 1px;}
+
+  /* ==== v2.4: prioridades ordenadas por fecha + semáforo ==== */
+  .prio-grid span.priority-rank{display:flex;align-items:center;justify-content:center;}
+  .prio-c-fecha .sem-pill{margin:4px 0 0 6px;}
+  .prio-grid .prio-sort-hint{font-weight:400;color:var(--text-secondary);font-family:'Inter',sans-serif;font-size:11.5px;margin-left:6px;}
 </style>
 </head>
 <body>
@@ -3169,7 +3174,7 @@ function toggleJavierPastWeeks(){
 // ---- Prioridades para la reunión con Javier (una lista por semana, dentro de Seguimiento semanal) ----
 function addJavierWeeklyPriority(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
-  bucket.prioridades.push({ id: cid(), texto: '', tarea: '', entregable: '', fecha: '', hecho: false });
+  bucket.prioridades.push({ id: cid(), texto: '', tarea: '', entregable: '', fecha: '', semaforo: 'verde', hecho: false });
   save();
   renderJavierWeeklyTables();
 }
@@ -3201,7 +3206,31 @@ function updateJavierPriorityField(id, field, val){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const p = bucket.prioridades.find(x => x.id === id);
   if (p) p[field] = val;
+  if (field === 'fecha') sortPrioridadesByFecha(bucket.prioridades);
   save();
+  if (field === 'fecha') renderJavierWeeklyTables();
+}
+
+// Prioridades siempre ordenadas por fecha (horizonte) ascendente; las que no tienen fecha van al final.
+function sortPrioridadesByFecha(arr){
+  if (!Array.isArray(arr)) return arr;
+  const idx = new Map(arr.map((p, i) => [p, i]));
+  arr.sort((a, b) => {
+    const fa = a.fecha || '9999-12-31', fb = b.fecha || '9999-12-31';
+    return fa < fb ? -1 : fa > fb ? 1 : idx.get(a) - idx.get(b);
+  });
+  return arr;
+}
+
+function cycleJavierPrioritySemaforo(id){
+  const order = ['verde', 'amarillo', 'rojo'];
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const p = bucket.prioridades.find(x => x.id === id);
+  if (!p) return;
+  const cur = p.semaforo || 'verde';
+  p.semaforo = order[(order.indexOf(cur) + 1) % order.length];
+  save();
+  renderJavierWeeklyTables();
 }
 
 function moveJavierPriorityTo(id, toIdx){
@@ -3264,24 +3293,18 @@ function handlePriorityDragEnd(ev){
 // Devuelve el HTML de la tarjeta de Prioridades, con el mismo formato de tarjeta que Riesgos/Necesito/Avances.
 function renderJavierWeeklyPrioridadesCard(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
-  const list = bucket.prioridades;
+  const list = sortPrioridadesByFecha(bucket.prioridades);
   const total = list.length;
   const rowsHtml = list.length ? list.map((p, i) => `
-    <div class="priority-row prio-grid ${p.hecho ? 'done' : ''}"
-         draggable="true"
-         ondragstart="handlePriorityDragStart(event,'${p.id}')"
-         ondragover="handlePriorityDragOver(event)"
-         ondragleave="handlePriorityDragLeave(event)"
-         ondrop="handlePriorityDrop(event,'${p.id}')"
-         ondragend="handlePriorityDragEnd(event)">
-      <span class="priority-drag-handle" title="Arrastrá para reordenar">⠿</span>
-      <input class="priority-rank" type="number" min="1" max="${total}" value="${i+1}"
-             onchange="setJavierPriorityRank('${p.id}', this.value)" title="Escribí un número para mover la prioridad a esa posición">
+    <div class="priority-row prio-grid ${p.hecho ? 'done' : ''}">
+      <span></span>
+      <span class="priority-rank">${i + 1}</span>
       <div class="task-check ${p.hecho ? 'done' : ''}" onclick="toggleJavierPriorityDone('${p.id}')">${p.hecho ? '✓' : ''}</div>
       <div class="prio-cell prio-c-tema"><textarea rows="1" class="prio-tema" placeholder="Tema..." oninput="autoGrowTextarea(this)" onchange="updateJavierPriorityField('${p.id}','texto', this.value)">${escapeHtml(p.texto || '')}</textarea></div>
       <div class="prio-cell"><div class="prio-lbl">Tareas concretas</div><textarea rows="1" placeholder="Tareas concretas..." oninput="autoGrowTextarea(this)" onchange="updateJavierPriorityField('${p.id}','tarea', this.value)">${escapeHtml(p.tarea || '')}</textarea></div>
       <div class="prio-cell"><div class="prio-lbl">Entregable</div><textarea rows="1" placeholder="Entregable..." oninput="autoGrowTextarea(this)" onchange="updateJavierPriorityField('${p.id}','entregable', this.value)">${escapeHtml(p.entregable || '')}</textarea></div>
-      <div class="prio-cell"><div class="prio-lbl">Horizonte</div><input type="date" value="${escapeAttr(p.fecha || '')}" onchange="updateJavierPriorityField('${p.id}','fecha', this.value)"></div>
+      <div class="prio-cell prio-c-fecha"><div class="prio-lbl">Horizonte</div><input type="date" value="${escapeAttr(p.fecha || '')}" onchange="updateJavierPriorityField('${p.id}','fecha', this.value)">
+        <button class="sem-pill ${p.semaforo || 'verde'}" onclick="cycleJavierPrioritySemaforo('${p.id}')" title="Click para cambiar el semáforo">${WK_SEM_LABEL[p.semaforo || 'verde']}</button></div>
       <div class="priority-actions">
         <button class="icon-btn" onclick="deleteJavierPriority('${p.id}')" title="Eliminar">✕</button>
       </div>
@@ -3294,7 +3317,7 @@ function renderJavierWeeklyPrioridadesCard(){
         <button class="btn-ghost" onclick="addJavierWeeklyPriority()">+ Agregar</button>
       </div>
       <div class="priority-list prio-table">
-        ${list.length ? '<div class="prio-head"><span>#</span><span>Tema</span><span>Tareas concretas</span><span>Entregable</span><span>Horizonte</span><span></span></div>' : ''}
+        ${list.length ? '<div class="prio-head"><span>#</span><span>Tema</span><span>Tareas concretas</span><span>Entregable</span><span>Horizonte ↑</span><span></span></div>' : ''}
         ${rowsHtml}
       </div>
     </div>
@@ -3480,6 +3503,7 @@ function renderJavierWeeklyTabs(){
 // Javier ve el resultado siempre en el mismo link (javier.html), sin necesidad de reenviarle nada.
 function publishJavierSnapshot(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  sortPrioridadesByFecha(bucket.prioridades);
   const weekLbl = formatJavierWeekTabLabel(selectedJavierWeekKey);
   const payload = {
     weekKey: selectedJavierWeekKey,
@@ -3746,12 +3770,14 @@ function copyJavierWeekRich(){
 
   let text = `Reunión con Javier — ${weekLbl}\n\n`;
   text += `PRIORIDADES PARA LA REUNIÓN\n`;
+  sortPrioridadesByFecha(bucket.prioridades);
   if (bucket.prioridades.length){
     bucket.prioridades.forEach((p, i) => {
       text += `${i + 1}. ${p.hecho ? '[Hecho] ' : ''}${p.texto || '(sin tema)'}\n`;
       if (p.tarea && p.tarea.trim()) text += `   Tareas: ${p.tarea.replace(/\n/g, '\n   ')}\n`;
       if (p.entregable && p.entregable.trim()) text += `   Entregable: ${p.entregable.replace(/\n/g, '\n   ')}\n`;
       if (p.fecha) text += `   Horizonte: ${fmtPrioFecha(p.fecha)}\n`;
+      text += `   Estado: ${semaforoTxt[p.semaforo || 'verde']} ${WK_SEM_LABEL[p.semaforo || 'verde']}\n`;
     });
   } else {
     text += `(sin prioridades cargadas)\n`;
@@ -3784,7 +3810,7 @@ function copyJavierWeekRich(){
     html += `<table style="border-collapse:collapse;width:100%;margin:0;"><tr><th ${th}>#</th><th ${th}>Tema</th><th ${th}>Tareas concretas</th><th ${th}>Entregable</th><th ${th}>Horizonte</th></tr>`;
     bucket.prioridades.forEach((p, i) => {
       const d = p.hecho;
-      html += `<tr><td ${td(d)}>${i + 1}</td><td ${td(d)}><b>${esc(p.texto || '(sin tema)')}</b>${d ? ' <i>(hecho)</i>' : ''}</td><td ${td(d)}>${nl(p.tarea)}</td><td ${td(d)}>${nl(p.entregable)}</td><td ${td(d)}>${p.fecha ? esc(fmtPrioFecha(p.fecha)) : ''}</td></tr>`;
+      html += `<tr><td ${td(d)}>${i + 1}</td><td ${td(d)}><b>${esc(p.texto || '(sin tema)')}</b>${d ? ' <i>(hecho)</i>' : ''}</td><td ${td(d)}>${nl(p.tarea)}</td><td ${td(d)}>${nl(p.entregable)}</td><td ${td(d)}>${p.fecha ? esc(fmtPrioFecha(p.fecha)) : ''}<br><span style="display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;${PRIO_SEM_STYLE[p.semaforo || 'verde']}">${WK_SEM_LABEL[p.semaforo || 'verde']}</span></td></tr>`;
     });
     html += `</table>`;
   } else {
@@ -4750,7 +4776,7 @@ function renderJavierHistoryList(){
   if (!keys.length){ list.innerHTML = '<div class="hist-none">Ninguna semana coincide con la búsqueda.</div>'; return; }
   list.innerHTML = keys.map(key => {
     const b = data.javierWeekly[key];
-    const pr = b.prioridades || [];
+    const pr = sortPrioridadesByFecha((b.prioridades || []).slice());
     const done = pr.filter(p => p.hecho).length;
     const crit = JAVIER_WEEKLY_SECTIONS.reduce((n, sec) => n + (b[sec.key] || []).filter(r => r.semaforo === 'rojo').length, 0);
     const riesgos = (b.riesgos || []).length, necesito = (b.necesito || []).length, avances = (b.avances || []).length;
@@ -4764,7 +4790,7 @@ function renderJavierHistoryList(){
 
     const prioHtml = pr.length ? `
       <table class="hist-table"><thead><tr><th>#</th><th>Tema</th><th>Tareas concretas</th><th>Entregable</th><th>Horizonte</th></tr></thead><tbody>
-      ${pr.map((p, i) => `<tr class="${p.hecho ? 'done' : ''}"><td class="n">${i + 1}</td><td class="t">${hlText(p.texto || '(sin tema)')}</td><td data-l="Tareas">${hlText(p.tarea)}</td><td data-l="Entregable">${hlText(p.entregable)}</td><td class="f" data-l="Horizonte">${p.fecha ? escapeHtml(fmtPrioFecha(p.fecha)) : ''}</td></tr>`).join('')}
+      ${pr.map((p, i) => `<tr class="${p.hecho ? 'done' : ''}"><td class="n">${i + 1}</td><td class="t">${hlText(p.texto || '(sin tema)')}</td><td data-l="Tareas">${hlText(p.tarea)}</td><td data-l="Entregable">${hlText(p.entregable)}</td><td class="f" data-l="Horizonte">${p.fecha ? escapeHtml(fmtPrioFecha(p.fecha)) : ''}<div><span class="sem-pill ${p.semaforo || 'verde'}" style="margin-top:4px">${WK_SEM_LABEL[p.semaforo || 'verde']}</span></div></td></tr>`).join('')}
       </tbody></table>` : '<div class="hist-empty">Sin prioridades cargadas.</div>';
 
     const secHtml = JAVIER_WEEKLY_SECTIONS.map(sec => {
@@ -4806,6 +4832,7 @@ function fmtPrioFecha(iso){
   return isNaN(d) ? iso : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 const WK_SEM_LABEL = { verde: 'OK', amarillo: 'Atención', rojo: 'Crítico' };
+const PRIO_SEM_STYLE = { verde: 'background:#E6F2EB;color:#237048;', amarillo: 'background:#F5EDDD;color:#8A6420;', rojo: 'background:#F7E7E4;color:#A83B31;' };
 function collabInitials(name){
   const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
   return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length-1][0] : '')).toUpperCase();
