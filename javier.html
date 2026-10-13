@@ -38,6 +38,19 @@
   #imgLightbox img{max-width:96%;max-height:96%;border-radius:10px;box-shadow:0 12px 48px rgba(0,0,0,.5);}
   .loading, .err {padding:40px;text-align:center;color:var(--text-tertiary);}
   footer{text-align:center;color:var(--text-tertiary);font-size:12px;margin-top:20px;}
+  .ptable-wrap{overflow-x:auto;}
+  .ptable{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;}
+  .ptable th{text-align:left;font-family:'Poppins',sans-serif;font-weight:600;font-size:13px;background:var(--bg);padding:9px 10px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .ptable th:first-child{border-left:1px solid var(--border);border-radius:10px 0 0 10px;}
+  .ptable th:last-child{border-right:1px solid var(--border);border-radius:0 10px 10px 0;}
+  .ptable td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.45;color:var(--text-secondary);}
+  .ptable td.n{color:var(--text-primary);font-weight:600;width:24px;}
+  .ptable td.t{color:var(--text-primary);font-weight:600;min-width:120px;}
+  .ptable td.f{white-space:nowrap;}
+  .ptable tr:last-child td{border-bottom:none;}
+  .ptable tr.done td{text-decoration:line-through;color:var(--text-tertiary);}
+  .ptable .hecho{display:inline-block;text-decoration:none;font-size:11px;font-weight:600;color:#237048;background:#E6F2EB;border-radius:999px;padding:1px 8px;margin-left:6px;}
+  .wrap{max-width:900px;}
 </style>
 </head>
 <body>
@@ -67,6 +80,12 @@ function fmtDate(iso){
   }catch(e){ return iso; }
 }
 
+function fmtDay(iso){
+  if (!iso) return '';
+  var d = new Date(iso + 'T00:00:00');
+  return isNaN(d) ? iso : d.toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit', year:'numeric'});
+}
+
 function render(data){
   const el = document.getElementById('content');
   let html = '<h1>Reunión con Javier' + (data.weekLabel ? ' — ' + esc(data.weekLabel) : '') + '</h1>';
@@ -74,11 +93,21 @@ function render(data){
 
   html += '<div class="card"><h2>Prioridades para la reunión</h2>';
   if (data.prioridades && data.prioridades.length){
-    html += '<ol>';
-    data.prioridades.forEach(function(p){
-      html += '<li class="' + (p.hecho?'done':'') + '">' + (p.hecho?'<b>[Hecho]</b> ':'') + esc(p.texto||'(sin texto)') + '</li>';
-    });
-    html += '</ol>';
+    var hasDetail = data.prioridades.some(function(p){ return p.tarea || p.entregable || p.fecha; });
+    if (!hasDetail){
+      html += '<ol>';
+      data.prioridades.forEach(function(p){
+        html += '<li class="' + (p.hecho?'done':'') + '">' + (p.hecho?'<b>[Hecho]</b> ':'') + esc(p.texto||'(sin texto)') + '</li>';
+      });
+      html += '</ol>';
+    } else {
+      html += '<div class="ptable-wrap"><table class="ptable"><thead><tr><th>#</th><th>Tema</th><th>Tareas concretas</th><th>Entregable</th><th>Horizonte</th></tr></thead><tbody>';
+      data.prioridades.forEach(function(p, i){
+        var nl = function(t){ return esc(t).replace(/\n/g,'<br>'); };
+        html += '<tr class="' + (p.hecho?'done':'') + '"><td class="n">' + (i+1) + '</td><td class="t">' + esc(p.texto||'(sin tema)') + (p.hecho?' <span class="hecho">Hecho</span>':'') + '</td><td>' + nl(p.tarea) + '</td><td>' + nl(p.entregable) + '</td><td class="f">' + esc(fmtDay(p.fecha)) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
   } else {
     html += '<p class="empty">Sin prioridades cargadas.</p>';
   }

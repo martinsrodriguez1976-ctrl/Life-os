@@ -724,6 +724,33 @@
     .subtask-row .subtask-del{opacity:0;transition:opacity .15s;}
     .subtask-row:hover .subtask-del{opacity:1;}
   }
+
+  /* ==== v2.2: Prioridades para la reunión en formato tabla ==== */
+  .prio-table{display:flex;flex-direction:column;gap:6px;}
+  .prio-head, .wk-card .priority-row.prio-grid{display:grid;grid-template-columns:16px 26px 20px minmax(130px,1fr) minmax(200px,1.7fr) minmax(140px,1.1fr) 132px 24px;column-gap:10px;align-items:start;}
+  .prio-head{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 10px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;color:var(--text-primary);}
+  .prio-head span:first-child{grid-column:1 / 4;}
+  .wk-card .priority-row.prio-grid{padding:8px 10px;cursor:default;}
+  .prio-grid .priority-drag-handle{cursor:grab;margin-top:7px;}
+  .prio-grid .priority-rank, .prio-grid .task-check{margin-top:4px;}
+  .prio-grid .prio-cell{min-width:0;}
+  .prio-grid .prio-lbl{display:none;font-size:11.5px;font-weight:600;color:var(--text-secondary);margin-bottom:2px;}
+  .prio-grid input[type=text], .prio-grid textarea, .prio-grid input[type=date]{width:100%;min-width:0;border:1px solid transparent;background:transparent;border-radius:6px;padding:5px 6px;font-family:'Inter',sans-serif;font-size:13.5px;color:var(--text-primary);}
+  .prio-grid .prio-tema{font-weight:600;}
+  .prio-grid textarea{resize:none;overflow:hidden;line-height:1.45;display:block;min-height:30px;}
+  .prio-grid input[type=date]{font-size:12.5px;color:var(--text-secondary);}
+  .prio-grid input:focus, .prio-grid textarea:focus{outline:none;border-color:var(--accent);background:var(--card);}
+  .priority-row.prio-grid:hover input, .priority-row.prio-grid:hover textarea{border-color:var(--border);}
+  .priority-row.prio-grid.done input:not(.priority-rank), .priority-row.prio-grid.done textarea{color:var(--text-tertiary);text-decoration:line-through;}
+  .prio-grid .priority-actions{margin-top:4px;}
+  @media (max-width:900px){
+    .prio-head{display:none;}
+    .wk-card .priority-row.prio-grid{grid-template-columns:16px 26px 20px minmax(0,1fr) 24px;row-gap:4px;}
+    .prio-grid .prio-cell{grid-column:4;}
+    .prio-grid .prio-cell.prio-c-tema{grid-row:1;}
+    .prio-grid .priority-actions{grid-column:5;grid-row:1;}
+    .prio-grid .prio-cell:not(.prio-c-tema) .prio-lbl{display:block;padding-left:6px;}
+  }
 </style>
 </head>
 <body>
@@ -3088,7 +3115,7 @@ function toggleJavierPastWeeks(){
 // ---- Prioridades para la reunión con Javier (una lista por semana, dentro de Seguimiento semanal) ----
 function addJavierWeeklyPriority(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
-  bucket.prioridades.push({ id: cid(), texto: '', hecho: false });
+  bucket.prioridades.push({ id: cid(), texto: '', tarea: '', entregable: '', fecha: '', hecho: false });
   save();
   renderJavierWeeklyTables();
 }
@@ -3112,6 +3139,14 @@ function updateJavierPriorityText(id, val){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const p = bucket.prioridades.find(x => x.id === id);
   if (p) p.texto = val;
+  save();
+}
+
+function updateJavierPriorityField(id, field, val){
+  if (!['texto','tarea','entregable','fecha'].includes(field)) return;
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const p = bucket.prioridades.find(x => x.id === id);
+  if (p) p[field] = val;
   save();
 }
 
@@ -3178,7 +3213,7 @@ function renderJavierWeeklyPrioridadesCard(){
   const list = bucket.prioridades;
   const total = list.length;
   const rowsHtml = list.length ? list.map((p, i) => `
-    <div class="priority-row ${p.hecho ? 'done' : ''}"
+    <div class="priority-row prio-grid ${p.hecho ? 'done' : ''}"
          draggable="true"
          ondragstart="handlePriorityDragStart(event,'${p.id}')"
          ondragover="handlePriorityDragOver(event)"
@@ -3189,7 +3224,10 @@ function renderJavierWeeklyPrioridadesCard(){
       <input class="priority-rank" type="number" min="1" max="${total}" value="${i+1}"
              onchange="setJavierPriorityRank('${p.id}', this.value)" title="Escribí un número para mover la prioridad a esa posición">
       <div class="task-check ${p.hecho ? 'done' : ''}" onclick="toggleJavierPriorityDone('${p.id}')">${p.hecho ? '✓' : ''}</div>
-      <input type="text" placeholder="Prioridad..." value="${escapeAttr(p.texto)}" onchange="updateJavierPriorityText('${p.id}', this.value)">
+      <div class="prio-cell prio-c-tema"><textarea rows="1" class="prio-tema" placeholder="Tema..." oninput="autoGrowTextarea(this)" onchange="updateJavierPriorityField('${p.id}','texto', this.value)">${escapeHtml(p.texto || '')}</textarea></div>
+      <div class="prio-cell"><div class="prio-lbl">Tareas concretas</div><textarea rows="1" placeholder="Tareas concretas..." oninput="autoGrowTextarea(this)" onchange="updateJavierPriorityField('${p.id}','tarea', this.value)">${escapeHtml(p.tarea || '')}</textarea></div>
+      <div class="prio-cell"><div class="prio-lbl">Entregable</div><textarea rows="1" placeholder="Entregable..." oninput="autoGrowTextarea(this)" onchange="updateJavierPriorityField('${p.id}','entregable', this.value)">${escapeHtml(p.entregable || '')}</textarea></div>
+      <div class="prio-cell"><div class="prio-lbl">Horizonte</div><input type="date" value="${escapeAttr(p.fecha || '')}" onchange="updateJavierPriorityField('${p.id}','fecha', this.value)"></div>
       <div class="priority-actions">
         <button class="icon-btn" onclick="deleteJavierPriority('${p.id}')" title="Eliminar">✕</button>
       </div>
@@ -3201,7 +3239,10 @@ function renderJavierWeeklyPrioridadesCard(){
         <h4 class="wk-card-title">Prioridades para la reunión${total ? `<span class="wk-count">${list.filter(p => p.hecho).length}/${total}</span>` : ''}</h4>
         <button class="btn-ghost" onclick="addJavierWeeklyPriority()">+ Agregar</button>
       </div>
-      <div class="priority-list">${rowsHtml}</div>
+      <div class="priority-list prio-table">
+        ${list.length ? '<div class="prio-head"><span>#</span><span>Tema</span><span>Tareas concretas</span><span>Entregable</span><span>Horizonte</span><span></span></div>' : ''}
+        ${rowsHtml}
+      </div>
     </div>
   `;
 }
@@ -3452,7 +3493,7 @@ function renderJavierWeeklyTables(){
   el.innerHTML = '<div class="wk-grid">' + renderJavierWeeklyPrioridadesCard() +
     JAVIER_WEEKLY_SECTIONS.map(s => renderJavierWeeklySectionTable(s.key, s.label)).join('') + '</div>';
   renderJavierWeekSummary();
-  el.querySelectorAll('textarea.weekly-estado-input').forEach(autoGrowTextarea);
+  el.querySelectorAll('textarea.weekly-estado-input, .prio-grid textarea').forEach(autoGrowTextarea);
 }
 
 function renderJavierWeekly(){
@@ -3656,7 +3697,10 @@ function copyJavierWeekRich(){
   text += `PRIORIDADES PARA LA REUNIÓN\n`;
   if (bucket.prioridades.length){
     bucket.prioridades.forEach((p, i) => {
-      text += `${i + 1}. ${p.hecho ? '[Hecho] ' : ''}${p.texto || '(sin texto)'}\n`;
+      text += `${i + 1}. ${p.hecho ? '[Hecho] ' : ''}${p.texto || '(sin tema)'}\n`;
+      if (p.tarea && p.tarea.trim()) text += `   Tareas: ${p.tarea.replace(/\n/g, '\n   ')}\n`;
+      if (p.entregable && p.entregable.trim()) text += `   Entregable: ${p.entregable.replace(/\n/g, '\n   ')}\n`;
+      if (p.fecha) text += `   Horizonte: ${fmtPrioFecha(p.fecha)}\n`;
     });
   } else {
     text += `(sin prioridades cargadas)\n`;
@@ -3683,12 +3727,15 @@ function copyJavierWeekRich(){
   html += `<h2 style="font-family:Poppins,Arial,sans-serif;font-size:18px;margin:0 0 12px;">Reunión con Javier — ${esc(weekLbl)}</h2>`;
   html += `<h3 style="font-size:13px;letter-spacing:.3px;margin:16px 0 6px;">PRIORIDADES PARA LA REUNIÓN</h3>`;
   if (bucket.prioridades.length){
-    html += `<ol style="margin:0 0 0 20px;padding:0;">`;
-    bucket.prioridades.forEach(p => {
-      const done = p.hecho;
-      html += `<li style="margin-bottom:4px;${done ? 'text-decoration:line-through;color:#888;' : ''}">${done ? '<b>[Hecho]</b> ' : ''}${esc(p.texto || '(sin texto)')}</li>`;
+    const th = 'style="text-align:left;padding:6px 8px;border:1px solid #DCE2E7;background:#EEF1F4;font-size:13px;"';
+    const td = (done) => `style="padding:6px 8px;border:1px solid #DCE2E7;vertical-align:top;font-size:13px;${done ? 'text-decoration:line-through;color:#888;' : ''}"`;
+    const nl = (t) => esc(t || '').replace(/\n/g, '<br>');
+    html += `<table style="border-collapse:collapse;width:100%;margin:0;"><tr><th ${th}>#</th><th ${th}>Tema</th><th ${th}>Tareas concretas</th><th ${th}>Entregable</th><th ${th}>Horizonte</th></tr>`;
+    bucket.prioridades.forEach((p, i) => {
+      const d = p.hecho;
+      html += `<tr><td ${td(d)}>${i + 1}</td><td ${td(d)}><b>${esc(p.texto || '(sin tema)')}</b>${d ? ' <i>(hecho)</i>' : ''}</td><td ${td(d)}>${nl(p.tarea)}</td><td ${td(d)}>${nl(p.entregable)}</td><td ${td(d)}>${p.fecha ? esc(fmtPrioFecha(p.fecha)) : ''}</td></tr>`;
     });
-    html += `</ol>`;
+    html += `</table>`;
   } else {
     html += `<p style="color:#888;margin:0;">(sin prioridades cargadas)</p>`;
   }
@@ -4555,6 +4602,15 @@ function renderFocus(){
 
 
 // ---- v2: helpers de Colaboradores y Reunión con Javier ----
+window.addEventListener('resize', () => {
+  clearTimeout(window.__prioGrowT);
+  window.__prioGrowT = setTimeout(() => document.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea), 150);
+});
+function fmtPrioFecha(iso){
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return isNaN(d) ? iso : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
 const WK_SEM_LABEL = { verde: 'OK', amarillo: 'Atención', rojo: 'Crítico' };
 function collabInitials(name){
   const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
