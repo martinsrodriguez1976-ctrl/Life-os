@@ -1,170 +1,164 @@
 {
-  "weekKey": "2026-09-07",
-  "weekLabel": "Semana 37",
-  "publishedAt": "2026-09-17T12:57:09.625Z",
+  "weekKey": "2026-10-12",
+  "weekLabel": "Semana 42",
+  "publishedAt": "2026-10-15T11:36:04.347Z",
   "prioridades": [
     {
-      "id": "id_26rj37sr",
-      "texto": "Vaciiado de PT de deposito LL",
-      "hecho": true
+      "id": "id_ndrvg1xh",
+      "texto": "Cubo",
+      "tarea": "Comparar el desempeño del cubo antes y después de las actualizaciones, usando los reportes de las semanas 39–41 contra la semana actual. Pedir al proveedor o a mantenimiento el log de fallos con fecha, tipo de fallo, duración y causa. Armar un Pareto de fallos con cantidad y tiempo de parada por tipo.",
+      "entregable": "Pareto de fallos más un veredicto: mejoró, no mejoró o no se puede concluir",
+      "fecha": "2026-10-15",
+      "hecho": false,
+      "semaforo": "verde"
     },
     {
-      "id": "id_f8dydsff",
-      "texto": "Avanzar con desarrollo deposito picking",
-      "hecho": false
+      "id": "id_4as9dn9b",
+      "texto": "Stock Villa Mercedes",
+      "tarea": "Proyectar la ocupación de VM hasta fin de octubre con el plan de producción y la demanda esperada. Definir el umbral crítico de posiciones y el plan de contingencia: transferencias a otros depósitos, almacenaje externo o reprogramación. Cuantificar el costo incremental de sostener ese stock.",
+      "entregable": "Proyección de ocupación, plan de contingencia y costo de la decisión",
+      "fecha": "2026-10-15",
+      "hecho": false,
+      "semaforo": "rojo",
+      "responsable": "Sabrina Martínez"
     },
     {
-      "id": "id_b8zelh3k",
-      "texto": "Segmentacion de clientes y Punto de carga",
-      "hecho": false
+      "id": "id_gy1jz9o1",
+      "texto": "SIRO",
+      "tarea": "Relevar los ajustes de flete pendientes o solicitados por transportistas. Validar cada uno contra la paritaria, el gasoil y la fórmula de ajuste acordada. Definir qué se aprueba, qué se negocia y qué se rechaza.",
+      "entregable": "Cuadro de ajustes con la recomendación para cada uno",
+      "fecha": "2026-10-15",
+      "hecho": false,
+      "semaforo": "rojo",
+      "responsable": "Flavia Novoa"
     },
     {
-      "id": "id_tg72w277",
-      "texto": "Previsdion de demanda",
-      "hecho": false
+      "id": "id_wj7pfxhp",
+      "texto": "Panes nuevas lineas",
+      "tarea": "Asignar las posiciones de guardado y definir la ubicación de picking. Confirmar el alta de los artículos en RSOFT y su asignación en ASA. Estimar el volumen semanal esperado para dimensionar los recursos.",
+      "entregable": "Layout y procedimiento operativo listos",
+      "fecha": "2026-10-15",
+      "hecho": false,
+      "semaforo": "amarillo",
+      "responsable": "Pedro Villasusso"
     },
     {
-      "id": "id_ikw7537i",
-      "texto": "Vencidos LL y AMC",
-      "hecho": false
+      "id": "id_ejgniyhw",
+      "texto": "Cambios estructura.",
+      "tarea": "Ejecutar lo acordado con Andrés. Cerrar la comunicación a los involucrados, los roles, la fecha efectiva y el traspaso de tareas.",
+      "entregable": "Comunicación hecha y traspaso documentado",
+      "fecha": "2026-10-15",
+      "hecho": false,
+      "semaforo": "rojo",
+      "responsable": "Martin Rodriguez"
+    },
+    {
+      "id": "id_z7kqbpqg",
+      "texto": "Informe GB",
+      "tarea": "Consolidar las alternativas trabajadas con los consultores, ahora con plantas fijas. Comparar cada combinación por costo logístico total, nivel de servicio, inversión y riesgo. Llegar con una recomendación concreta, no solo con un menú de opciones.",
+      "entregable": "Informe ejecutivo para GB con la decisión recomendada",
+      "fecha": "2026-10-21",
+      "hecho": false,
+      "semaforo": "verde"
+    },
+    {
+      "id": "id_8weyb5eg",
+      "texto": "Nodos de Abastecimiento",
+      "tarea": "Precisar con Daniel el concepto exacto y cómo lo nombra. Definir qué depósitos funcionan como nodo y con qué reglas: qué abastece cada uno, con qué frecuencia y con qué stock objetivo. Armar el plan de implementación con un piloto.",
+      "entregable": "Definición del modelo, piloto y cronograma",
+      "fecha": "2026-12-01",
+      "hecho": false,
+      "semaforo": "verde"
     }
   ],
   "riesgos": [
     {
-      "id": "id_jpih34ne",
+      "id": "id_dhggqdn2",
       "semaforo": "amarillo",
-      "avance": "COT",
-      "estado": "• Base interior subida\n• Raurell esta actualizando CP de capital para subir\n• 7100 sigue sin funcionar. Como solucion paliativa realiza con el camion ppio. "
-    },
-    {
-      "id": "id_852twk20",
-      "semaforo": "amarillo",
-      "avance": "Americold",
-      "estado": "• Confirmado. Venta a Axis. "
-    },
-    {
-      "id": "id_zurtis5v",
-      "semaforo": "amarillo",
-      "avance": "Nuevo deposito de Picking",
-      "estado": "• DR y LA, quisieron reunirse con Maya. \n• Pretenden dimensionar considerando que el cubo funcionara. Voy a seguir con mi plan. (Si no van a sumar...que se corran..jejeje)"
-    },
-    {
-      "id": "id_dq5e0i4o",
-      "semaforo": "amarillo",
-      "avance": "Lavadero BUE",
-      "estado": "• Denunciado en ambiente. Estamos buscando alternativas. Solicitud a Bracamonte y a Vidal, para reactivar proyecto lavadero en Graba.\n• Campana: 400 dol. \n• Milo: 500 dol. Entregan bines con producto remanente o lo compran. "
-    },
-    {
-      "id": "id_kmgipzdk",
-      "semaforo": "amarillo",
-      "avance": "Imputaciones erroneas de presupuesto",
-      "estado": "• Siguen imputando repuestos de cubo.  "
+      "avance": "Maestros varios",
+      "estado": "• Falta de avance en este sentido, nos dentendra el avance de Cuadro tarifario y ASA. "
     }
   ],
   "necesito": [
     {
-      "id": "id_e85gke04",
-      "semaforo": "rojo",
-      "avance": "Sistemas",
-      "estado": "• IFLOW: Avanzar con Apis de interacción de sistemas\n• Consolidado para colectoras: Rediseño de proceso."
-    },
-    {
-      "id": "id_d94as3lk",
+      "id": "id_50zd7kka",
       "semaforo": "verde",
-      "avance": "Salida LL",
-      "estado": "• Equipo logística a casa de Sabrina\n• Almuerzo?"
+      "avance": "LIcencia de IA para Muriado",
+      "estado": "• Suspendo por el momento por comentario de ayer. "
     },
     {
-      "id": "id_9qghxdv5",
+      "id": "id_naaawqrx",
       "semaforo": "rojo",
-      "avance": "Definicion de monitoreo de autoelevadores. ",
-      "estado": "• Vamos a seguir pagando?"
+      "avance": "Cambio estructura",
+      "estado": "• 15/10 Validemos salarios. \n• 16/10 Quiero empezar comunicación y transiciones. \n• Mayor duda: Martin Kisser"
     },
     {
-      "id": "id_x34608e7",
-      "semaforo": "verde",
-      "avance": "Validar iniciativa en Siro",
-      "estado": "• Validacion de reparto COR"
+      "id": "id_y4u2oivh",
+      "semaforo": "amarillo",
+      "avance": "Ver tema SB",
+      "estado": "• Aceiteros en IFLOW; JJ esta de vacaciones. Vuelve semana proxima"
+    },
+    {
+      "id": "id_192q813x",
+      "semaforo": "amarillo",
+      "avance": "Apis Iflow",
+      "estado": "• 13/10 Envie esquema para armado de apis. "
     }
   ],
   "avances": [
     {
-      "id": "id_rjehbagp",
-      "semaforo": "verde",
-      "avance": "IFLOW: ",
-      "estado": "• 8/9: Reunión operativa y visita a deposito, con el equipo de ILFOW y de RDC (SMartinez, CCUbillas y GFranco. \n• Avance sobre cuestiones operativas de mudanza, entrega a pedidos, Gestion de pallets, etc"
-    },
-    {
-      "id": "id_9k804lxg",
-      "semaforo": "verde",
-      "avance": "Visita a Tte. Frios del Norte",
-      "estado": "• 9/9: Visita para entender y explorar futuras posibilidades de negocios. Ej.: Cambio de TSP Mendoza.\n• Contacto con Gerencia Comercial. \n• Algunas quejas de lo complicado de negociar con Sebastian"
-    },
-    {
-      "id": "id_mnz4d2mm",
+      "id": "id_mm7l9seg",
       "semaforo": "rojo",
-      "avance": "Segmentacion de clientes",
-      "estado": "• Sin avance"
+      "avance": "Carga graneles Graba",
+      "estado": "• Se fue la persona que gestionaba las cargas. (Los reemplazos son personas totalmente nuevas) \n• Propusimos envió de Walter Castillo para asegurar la operación. Ideal que vaya Daniel Suarez. "
     },
     {
-      "id": "id_oezbdu1f",
-      "semaforo": "verde",
-      "avance": "Prueba envio de Levaduras",
-      "estado": "• Jeremías esta coordinando el primer envió. "
+      "id": "id_7pxc7exl",
+      "semaforo": "amarillo",
+      "avance": "Sistemas",
+      "estado": "• Entorno ASA: Con inconvenientes aun en varios temas. \n• Cuadro tarifario: 9/10 presentación primer maqueta. \n• Pallets Swap: Llegaron las apis del proveedor. Ahora Sistemas tiene que integrarlas.\n• Seguimiento de clientes: No funciona aun el simov automático?\n"
     },
     {
-      "id": "id_g9pjqct8",
-      "semaforo": "verde",
-      "avance": "Destruccion producto Vencido LL y AMC",
-      "estado": "• En curso. Confirmado. hay una parte que quedara fuera de planta para cargarla luego y darle destino. \n• El reproceso fue retirado semana pasada por proveedor. \n• Lunes próximo retiran Glucosa. (No dieron temperaturas de carga el lunes pasado)"
-    },
-    {
-      "id": "id_lw76kfm6",
-      "semaforo": "verde",
-      "avance": "Cubo",
-      "estado": "• Se volvió a solicitar restricción de transito por los deposito de personal. \n• Falla de naveta post-mantenimiento: tras una intervención de mantenimiento en el sistema (según se aclara después, sobre la red de Refinería), la naveta empieza a presentar fallas. Diego relaciona la coincidencia de fechas con la caída de un segundo carro y plantea determinar causalidad. \n• Caída del segundo carro: mencionada como evento coincidente en el tiempo con el mantenimiento de red, pendiente de confirmar si es causa-efecto o coincidencia.\n• Egreso operativo (sin más detalle en el texto — no queda claro si es causa, consecuencia o un evento aparte del corte de naveta). \n• Naveta frenada nuevamente: recurrencia del problema, no responde en modo automático. \n• Diagnóstico de origen: se abre la duda de si la falla es de comunicación o de red. La respuesta preliminar apunta a comunicación.\n• Demoras y dificultades para dar acceso a VPN para ingreso. \n• Viernes 19/9 reunión con Quintino. (Proveedor de implementaciones tecnológicas para el movimiento de materiales)"
-    },
-    {
-      "id": "id_ycr2uq4x",
-      "semaforo": "verde",
-      "avance": "Entorno ASA",
-      "estado": "• Problemas en correlación de datos entre un entorno y el otro: Corregido. \n• German esta verificando si funcionan las notas de pedido por reposición (Reemplazo de Rem. Internos)\n• Ariel marco gran lista de diferencias"
-    },
-    {
-      "id": "id_l4idl96j",
-      "semaforo": "rojo",
-      "avance": "Cambio Andres Chichalof",
-      "estado": "• Entrevista realizada. Enviaron reporte de reunión. Revisemos petición salarial.\n• 16/9: Andres vino a informar que no le daba para seguir en el puesto. \n• Ver opciones"
-    },
-    {
-      "id": "id_p69mc97k",
-      "semaforo": "verde",
-      "avance": "Compra Traspallet electricos para camiones reparto",
-      "estado": "• Compre 3 equipos para camiones de reparto. "
-    },
-    {
-      "id": "id_iwga1vb5",
-      "semaforo": "verde",
-      "avance": "Monitoreo Comex",
-      "estado": "• Casi listo. \n• Resta trabajar en qlik"
-    },
-    {
-      "id": "id_mg522mab",
-      "semaforo": "verde",
-      "avance": "Arquitectura logistica",
-      "estado": "• En simultaneo: Diseño operativo de Picking. Modelo de servicio, Arquitectura optima de red y estrategia inventarios multi nodos\n• Resta avazar con desarrollos de qlik."
-    },
-    {
-      "id": "id_aqeur8m0",
-      "semaforo": "verde",
-      "avance": "Deposito transitorio picking",
-      "estado": "• Analizando viabilidad de strechadora de Graba y/o LL\n• Preparando zona de picking en parte trasera de deposito. \n• Personal de depósitos involucrados en desarrollo de solución. "
-    },
-    {
-      "id": "id_qb0bvhpt",
+      "id": "id_06acvook",
       "semaforo": "verde",
       "avance": "Decomisos en Helios",
-      "estado": "• Compraron equipo que realiza separacion de packaging de producto\n• Instalando durante esta semana. Proxima en uso. \n• Se podria enviar producto LL\n• "
+      "estado": "• Estan haciendo la prueba de aderezos"
+    },
+    {
+      "id": "id_e30t48qq",
+      "semaforo": "verde",
+      "avance": "Cierre AMC",
+      "estado": "• Quedan solo 75 pall. \n• AMC solicito nos quedemos hasta diciembre. Le dije que no. "
+    },
+    {
+      "id": "id_1a9t7n6o",
+      "semaforo": "verde",
+      "avance": "Revision seguros",
+      "estado": "• En Curso"
+    },
+    {
+      "id": "id_juqjmwcu",
+      "semaforo": "verde",
+      "avance": "Comex",
+      "estado": "• Cotizando Estabilizante de Alemania\n• Embarques a Rusia de HDC\n• Reunión con compras para armar proceso.\n• Cotización transporte caldera "
+    },
+    {
+      "id": "id_w75n9bp1",
+      "semaforo": "verde",
+      "avance": "Proyecto desactivacion Flota",
+      "estado": "• Reunion con RRHH\n• Pedido de precio por bateas para Tonyto a Nestor. "
+    },
+    {
+      "id": "id_n003bs47",
+      "semaforo": "verde",
+      "avance": "Nuevo deposito de V. Mercedes",
+      "estado": "• Cotizacion de maya compartida con Rodrigo. Quiere cotizacion adicional. "
+    },
+    {
+      "id": "id_je7mj5pz",
+      "semaforo": "verde",
+      "avance": "Nuevo deposito de Picking",
+      "estado": "• "
     }
   ]
 }
