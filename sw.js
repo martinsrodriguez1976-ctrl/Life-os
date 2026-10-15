@@ -2,7 +2,7 @@
 // y funcione aunque no haya internet. Nunca cachea llamadas a Microsoft Graph / login,
 // para no interferir jamas con la sincronizacion de OneDrive.
 
-const CACHE_NAME = 'life-os-shell-v1';
+const CACHE_NAME = 'life-os-shell-v2';
 const SHELL_FILES = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -30,6 +30,9 @@ self.addEventListener('fetch', (event) => {
     url.includes('login.microsoftonline.com') ||
     url.includes('microsoftonline.com') ||
     url.includes('cdn.jsdelivr.net') ||
+    url.includes('api.github.com') ||          // publicación para Javier: nunca cachear (el sha viejo provoca conflicto 409)
+    !url.startsWith(self.location.origin) ||   // nada de otros dominios pasa por el caché
+    event.request.headers.has('Authorization') ||
     event.request.method !== 'GET'
   ) {
     return; // dejar pasar directo a la red, sin intervenir

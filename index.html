@@ -3648,15 +3648,21 @@ async function publishJavierViaApi(json, label, kb){
   const token = getGhToken();
   const api = `https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`;
   const headers = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+  // sha siempre fresco (con parámetro anti-caché) y un reintento si GitHub responde conflicto (409),
+  // por si el archivo cambió entre la lectura y la escritura.
+  const getSha = async () => {
+    const cur = await fetch(`${api}?ref=main&_=${Date.now()}`, { headers, cache: 'no-store' });
+    if (cur.status === 200) return (await cur.json()).sha;
+    if (cur.status === 404) return undefined;
+    throw { status: cur.status };
+  };
+  const putFile = (sha) => fetch(api, {
+    method: 'PUT', headers,
+    body: JSON.stringify({ message: `Publicar ${label} para Javier`, content: utf8ToBase64(json), sha, branch: 'main' })
+  });
   try {
-    let sha;
-    const cur = await fetch(api + '?ref=main', { headers, cache: 'no-store' });
-    if (cur.status === 200) sha = (await cur.json()).sha;
-    else if (cur.status !== 404) throw { status: cur.status };
-    const res = await fetch(api, {
-      method: 'PUT', headers,
-      body: JSON.stringify({ message: `Publicar ${label} para Javier`, content: utf8ToBase64(json), sha, branch: 'main' })
-    });
+    let res = await putFile(await getSha());
+    if (res.status === 409) res = await putFile(await getSha());
     if (!res.ok) throw { status: res.status, body: await res.text().catch(() => '') };
     pjShow('Publicado', `
       <p class="pj-ok">✓ ${escapeHtml(label)} publicada.</p>
