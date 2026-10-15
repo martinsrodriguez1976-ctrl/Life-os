@@ -3630,7 +3630,7 @@ function openGhTokenSetup(){
       <li><b>Permissions</b> → <b>Repository permissions</b> → <b>Contents</b>: <b>Read and write</b>. Nada más.</li>
       <li><b>Generate token</b>, copialo y pegalo acá abajo.</li>
     </ol>
-    <div class="field"><label>Token de GitHub</label><input type="password" id="ghTokenInput" placeholder="github_pat_…" autocomplete="off"></div>
+    <div class="field"><label>Token de GitHub</label><input type="password" id="ghTokenInput" placeholder="${getGhToken() ? 'Ya hay un token guardado: pegá uno nuevo solo si querés reemplazarlo' : 'github_pat_…'}" autocomplete="off"></div>
     <p class="pj-note">El token queda guardado solo en este navegador (no viaja a OneDrive ni a ningún otro lado) y solo puede tocar el repo Life-os. Si cambiás de compu o navegador, hay que cargarlo de nuevo.</p>
     <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('publishJavierModal')">Cancelar</button><button class="btn-add" onclick="saveGhTokenAndPublish()">Guardar y publicar</button></div>`);
 }
@@ -3679,7 +3679,7 @@ async function publishJavierViaApi(json, label, kb){
       <p class="pj-err">${why}</p>
       <div class="modal-actions" style="justify-content:space-between;flex-wrap:wrap;">
         <button class="btn-secondary" onclick="publishJavierManual()">Hacerlo a mano</button>
-        <span style="display:flex;gap:8px;"><button class="btn-secondary" onclick="setGhToken('');openGhTokenSetup()">Cambiar token</button><button class="btn-add" onclick="publishJavierSnapshot()">Reintentar</button></span>
+        <span style="display:flex;gap:8px;"><button class="btn-secondary" onclick="openGhTokenSetup()">Cambiar token</button><button class="btn-add" onclick="publishJavierSnapshot()">Reintentar</button></span>
       </div>`);
   }
 }
