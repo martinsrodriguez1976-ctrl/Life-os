@@ -1,7 +1,7 @@
 {
   "weekKey": "2026-10-12",
   "weekLabel": "Semana 42",
-  "publishedAt": "2026-10-15T11:36:04.347Z",
+  "publishedAt": "2026-10-15T12:48:46.724Z",
   "prioridades": [
     {
       "id": "id_ndrvg1xh",
@@ -77,6 +77,12 @@
       "semaforo": "amarillo",
       "avance": "Maestros varios",
       "estado": "• Falta de avance en este sentido, nos dentendra el avance de Cuadro tarifario y ASA. "
+    },
+    {
+      "id": "id_qnzeu772",
+      "semaforo": "verde",
+      "avance": "Sabrina Martinez",
+      "estado": "• Adeuda 60 dias de vacaciones. \n• Solicite compremos por lo menos 15 días. \n• Esta a punto de sumar 21 días mas. \n"
     }
   ],
   "necesito": [
@@ -120,9 +126,10 @@
     },
     {
       "id": "id_06acvook",
-      "semaforo": "verde",
+      "semaforo": "rojo",
       "avance": "Decomisos en Helios",
-      "estado": "• Estan haciendo la prueba de aderezos"
+      "estado": "• Aderezos funciono fantástico. \n• Mandamos a Sebastián hoy a negociar comercialmente. \n• ",
+      "fechaEst": "2026-10-16"
     },
     {
       "id": "id_e30t48qq",
@@ -158,7 +165,7 @@
       "id": "id_je7mj5pz",
       "semaforo": "verde",
       "avance": "Nuevo deposito de Picking",
-      "estado": "• "
+      "estado": "• Proyectos tiene las medidas que informo Maya\n• 15/10 tienen reunión con el primer proveedor para cotizar"
     }
   ]
 }
