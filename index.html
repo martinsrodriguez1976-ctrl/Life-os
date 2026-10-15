@@ -837,6 +837,14 @@
   .wk-date-chip .x{font-size:10px;opacity:.6;padding:0 2px;}
   .wk-date-chip .x:hover{opacity:1;}
   .hist-due{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:600;color:var(--accent);background:var(--card);border-radius:999px;padding:2px 9px;}
+
+  /* ==== v2.7: publicación para Javier ==== */
+  .pj-steps{margin:0 0 14px;padding-left:20px;font-size:13.5px;color:var(--text-secondary);line-height:1.55;}
+  .pj-steps b{color:var(--text-primary);}
+  .pj-note{font-size:12.5px;color:var(--text-secondary);background:var(--bg);border-radius:var(--radius-sm);padding:10px 12px;margin:0 0 14px;line-height:1.5;}
+  .pj-ok{color:var(--green-ink);font-weight:600;}
+  .pj-err{color:var(--red-ink);font-weight:600;}
+  .pj-link{color:var(--accent);font-weight:600;}
 </style>
 </head>
 <body>
@@ -897,6 +905,13 @@
       <button class="btn-secondary" id="syncConnectBtn" onclick="handleConnectClick()">🔗 Conectar OneDrive</button>
       <button class="btn-secondary" id="syncSignOutBtn" onclick="signOutOneDrive()" style="display:none;">Cerrar sesión</button>
       <button class="icon-btn" onclick="openSyncConfigModal()" title="Configurar sincronización">⚙</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="publishJavierModal">
+    <div class="modal" style="max-width:520px;">
+      <h3 id="pjTitle">Publicar para Javier</h3>
+      <div id="pjBody"></div>
     </div>
   </div>
 
@@ -3534,31 +3549,132 @@ function renderJavierWeeklyTabs(){
 // Publica un snapshot de solo lectura para Javier: arma el JSON de la semana actual,
 // lo copia al portapapeles y abre la página de GitHub para pegarlo en javier-data.json.
 // Javier ve el resultado siempre en el mismo link (javier.html), sin necesidad de reenviarle nada.
-function publishJavierSnapshot(){
+function buildJavierSnapshotJson(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   sortPrioridadesByFecha(bucket.prioridades);
-  const weekLbl = formatJavierWeekTabLabel(selectedJavierWeekKey);
   const payload = {
     weekKey: selectedJavierWeekKey,
-    weekLabel: weekLbl,
+    weekLabel: formatJavierWeekTabLabel(selectedJavierWeekKey),
     publishedAt: new Date().toISOString(),
     prioridades: bucket.prioridades,
     riesgos: bucket.riesgos,
     necesito: bucket.necesito,
     avances: bucket.avances
   };
-  const json = JSON.stringify(payload, null, 2);
-  const editUrl = 'https://github.com/martinsrodriguez1976-ctrl/Life-os/edit/main/javier-data.json';
-  const finish = (msg) => showToast(msg);
+  return { json: JSON.stringify(payload, null, 2), label: payload.weekLabel };
+}
+
+// Publicación para Javier.
+// Automática: con un token de GitHub (fine-grained, solo repo Life-os, permiso Contents: Read and write)
+// guardado SOLO en este navegador, el botón escribe javier-data.json directo por la API de GitHub.
+// Manual (sin token): copia el JSON y abre el editor de GitHub con los pasos explicados en pantalla.
+const GH_REPO = 'martinsrodriguez1976-ctrl/Life-os';
+const GH_FILE = 'javier-data.json';
+const GH_TOKEN_KEY = 'lifeos_github_token_v1';
+const JAVIER_VIEW_URL = 'https://martinsrodriguez1976-ctrl.github.io/Life-os/javier.html';
+
+function getGhToken(){ try { return localStorage.getItem(GH_TOKEN_KEY) || ''; } catch(e){ return ''; } }
+function setGhToken(t){ try { t ? localStorage.setItem(GH_TOKEN_KEY, t) : localStorage.removeItem(GH_TOKEN_KEY); } catch(e){} }
+
+function pjShow(title, html){
+  document.getElementById('pjTitle').textContent = title;
+  document.getElementById('pjBody').innerHTML = html;
+  openModal('publishJavierModal');
+}
+
+function utf8ToBase64(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+function publishJavierSnapshot(){
+  const { json, label } = buildJavierSnapshotJson();
+  const kb = Math.round(new TextEncoder().encode(json).length / 1024);
+  if (getGhToken()) { publishJavierViaApi(json, label, kb); return; }
+  pjShow('Publicar para Javier', `
+    <p class="pj-note">Hoy la publicación es manual: el botón copia los datos de <b>${escapeHtml(label)}</b> y abre GitHub, pero hay que pegarlos y confirmar. Podés dejarla automática (un clic y listo) conectando GitHub una sola vez.</p>
+    <div class="modal-actions" style="justify-content:space-between;flex-wrap:wrap;">
+      <button class="btn-secondary" onclick="publishJavierManual()">Hacerlo a mano</button>
+      <button class="btn-add" onclick="openGhTokenSetup()">Dejarla automática</button>
+    </div>`);
+}
+
+function publishJavierManual(){
+  const { json, label } = buildJavierSnapshotJson();
+  const editUrl = `https://github.com/${GH_REPO}/edit/main/${GH_FILE}`;
+  const steps = `
+    <ol class="pj-steps">
+      <li>En la pestaña de GitHub que se abrió, hacé clic dentro del editor.</li>
+      <li><b>Ctrl + A</b> (seleccionar todo) y <b>Ctrl + V</b> (pegar).</li>
+      <li>Arriba a la derecha: <b>Confirmar cambios…</b> y otra vez <b>Confirmar cambios</b>.</li>
+    </ol>
+    <p class="pj-note">Si no reemplazás el contenido y confirmás, Javier sigue viendo la versión anterior.</p>`;
+  const done = (copied) => pjShow('Publicar a mano', `
+    ${copied ? `<p class="pj-ok">✓ Datos de ${escapeHtml(label)} copiados.</p>` : `<p class="pj-err">No se pudo copiar automáticamente.</p><textarea readonly style="width:100%;height:120px;font-size:11px;" onclick="this.select()">${escapeHtml(json)}</textarea><p class="pj-note">Seleccioná todo el texto de arriba y copialo con Ctrl + C.</p>`}
+    ${steps}
+    <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('publishJavierModal')">Listo</button><a class="btn-add" style="text-decoration:none;" href="${editUrl}" target="_blank" rel="noopener">Abrir GitHub</a></div>`);
+  window.open(editUrl, '_blank');
   if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(json)
-      .then(() => {
-        window.open(editUrl, '_blank');
-        finish('JSON copiado. En la pestaña de GitHub: Ctrl+A, Ctrl+V y "Commit changes".');
-      })
-      .catch(() => finish('No se pudo copiar automático. Copiá el JSON manualmente desde la consola.'));
-  } else {
-    finish('Este navegador no permite copiar automático.');
+    navigator.clipboard.writeText(json).then(() => done(true)).catch(() => done(false));
+  } else { done(false); }
+}
+
+function openGhTokenSetup(){
+  pjShow('Publicación automática', `
+    <ol class="pj-steps">
+      <li>Abrí <a class="pj-link" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → nuevo token (fine-grained)</a>.</li>
+      <li>Nombre: <b>Life OS – Javier</b>. Vencimiento: el que prefieras (por ejemplo 1 año).</li>
+      <li><b>Repository access</b> → <b>Only select repositories</b> → elegí <b>Life-os</b>.</li>
+      <li><b>Permissions</b> → <b>Repository permissions</b> → <b>Contents</b>: <b>Read and write</b>. Nada más.</li>
+      <li><b>Generate token</b>, copialo y pegalo acá abajo.</li>
+    </ol>
+    <div class="field"><label>Token de GitHub</label><input type="password" id="ghTokenInput" placeholder="github_pat_…" autocomplete="off"></div>
+    <p class="pj-note">El token queda guardado solo en este navegador (no viaja a OneDrive ni a ningún otro lado) y solo puede tocar el repo Life-os. Si cambiás de compu o navegador, hay que cargarlo de nuevo.</p>
+    <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('publishJavierModal')">Cancelar</button><button class="btn-add" onclick="saveGhTokenAndPublish()">Guardar y publicar</button></div>`);
+}
+
+function saveGhTokenAndPublish(){
+  const t = (document.getElementById('ghTokenInput').value || '').trim();
+  if (!t){ showToast('Pegá el token primero.'); return; }
+  setGhToken(t);
+  const { json, label } = buildJavierSnapshotJson();
+  publishJavierViaApi(json, label, Math.round(new TextEncoder().encode(json).length / 1024));
+}
+
+async function publishJavierViaApi(json, label, kb){
+  pjShow('Publicando…', `<p class="pj-note">Subiendo ${escapeHtml(label)} (${kb} KB) a GitHub…</p>`);
+  const token = getGhToken();
+  const api = `https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`;
+  const headers = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
+  try {
+    let sha;
+    const cur = await fetch(api + '?ref=main', { headers, cache: 'no-store' });
+    if (cur.status === 200) sha = (await cur.json()).sha;
+    else if (cur.status !== 404) throw { status: cur.status };
+    const res = await fetch(api, {
+      method: 'PUT', headers,
+      body: JSON.stringify({ message: `Publicar ${label} para Javier`, content: utf8ToBase64(json), sha, branch: 'main' })
+    });
+    if (!res.ok) throw { status: res.status, body: await res.text().catch(() => '') };
+    pjShow('Publicado', `
+      <p class="pj-ok">✓ ${escapeHtml(label)} publicada.</p>
+      <p class="pj-note">Javier la ve en su link en uno o dos minutos (GitHub Pages tarda un poco en actualizar).</p>
+      <div class="modal-actions"><a class="btn-secondary" style="text-decoration:none;" href="${JAVIER_VIEW_URL}" target="_blank" rel="noopener">Ver página de Javier</a><button class="btn-add" onclick="closeModal('publishJavierModal')">Listo</button></div>`);
+  } catch (e) {
+    const st = e && e.status;
+    let why = 'No se pudo conectar con GitHub. Revisá la conexión e intentá de nuevo.';
+    if (st === 401) why = 'El token no es válido o venció.';
+    else if (st === 403 || st === 404) why = 'El token no tiene permiso de escritura sobre Life-os (Contents: Read and write).';
+    else if (st === 409) why = 'GitHub rechazó el cambio por un conflicto. Probá de nuevo.';
+    else if (st === 413 || st === 422) why = `El archivo es demasiado grande (${kb} KB). Probá quitar imágenes adjuntas pesadas.`;
+    pjShow('No se pudo publicar', `
+      <p class="pj-err">${why}</p>
+      <div class="modal-actions" style="justify-content:space-between;flex-wrap:wrap;">
+        <button class="btn-secondary" onclick="publishJavierManual()">Hacerlo a mano</button>
+        <span style="display:flex;gap:8px;"><button class="btn-secondary" onclick="setGhToken('');openGhTokenSetup()">Cambiar token</button><button class="btn-add" onclick="publishJavierSnapshot()">Reintentar</button></span>
+      </div>`);
   }
 }
 
