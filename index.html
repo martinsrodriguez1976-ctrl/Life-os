@@ -816,6 +816,27 @@
   .prio-owner.empty{background:transparent;border:1px dashed var(--border);}
   .owner-chip{display:inline-flex;align-items:center;gap:5px;margin-top:4px;font-size:11.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 9px;}
   .owner-chip::before{content:"👤";font-size:10px;}
+
+  /* ==== v2.6: filas de riesgos/necesito/avances: orden manual + fecha estimada ==== */
+  .wk-card .weekly-mail-row.wk-drag-over{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft) inset;}
+  .wk-card .weekly-mail-row.wk-dragging{opacity:.4;}
+  .wk-row-handle{cursor:grab;color:var(--text-tertiary);font-size:14px;line-height:1;user-select:none;padding:2px 0;flex-shrink:0;}
+  .wk-row-handle:active{cursor:grabbing;}
+  .wk-order{margin-left:auto;display:inline-flex;align-items:center;gap:4px;}
+  .wk-move{display:flex;flex-direction:row;gap:2px;flex-shrink:0;}
+  .wk-move button{border:none;background:transparent;color:var(--text-tertiary);font-size:10px;line-height:1;padding:4px 5px;cursor:pointer;border-radius:4px;}
+  .wk-move button:hover{color:var(--accent);background:var(--accent-soft);}
+  .wk-move button:disabled{visibility:hidden;}
+  @media (hover:hover){ .wk-card .weekly-mail-row .wk-move, .wk-card .weekly-mail-row .wk-row-handle{opacity:0;transition:opacity .15s;} .wk-card .weekly-mail-row:hover .wk-move, .wk-card .weekly-mail-row:hover .wk-row-handle{opacity:1;} }
+  .wk-date{position:relative;display:inline-flex;align-items:center;}
+  .wk-date input[type=date]{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none;border:none;padding:0;}
+  .wk-date-add{border:none;background:transparent;cursor:pointer;font-size:14px;line-height:1;padding:3px 4px;border-radius:6px;opacity:.55;}
+  .wk-date-add:hover{opacity:1;background:var(--accent-soft);}
+  .wk-date-chip{display:inline-flex;align-items:center;gap:5px;border:none;cursor:pointer;font:600 11.5px 'Inter',sans-serif;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 6px 3px 9px;}
+  .wk-date-chip.late{color:var(--red-ink);background:var(--red-soft);}
+  .wk-date-chip .x{font-size:10px;opacity:.6;padding:0 2px;}
+  .wk-date-chip .x:hover{opacity:1;}
+  .hist-due{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:600;color:var(--accent);background:var(--card);border-radius:999px;padding:2px 9px;}
 </style>
 </head>
 <body>
@@ -3545,8 +3566,9 @@ function publishJavierSnapshot(){
 function renderJavierWeeklySectionTable(section, label){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   const rows = bucket[section];
-  const rowsHtml = rows.length ? rows.map(r => `
-    <div class="weekly-mail-row">
+  const rowsHtml = rows.length ? rows.map((r, ri) => `
+    <div class="weekly-mail-row" data-wk-section="${section}" data-wk-id="${r.id}"
+         ondragover="wkRowDragOver(event)" ondragleave="wkRowDragLeave(event)" ondrop="wkRowDrop(event,'${section}','${r.id}')">
       <div class="weekly-mail-row-head">
         <button class="sem-pill ${r.semaforo}" onclick="cycleJavierWeeklySemaforo('${section}','${r.id}')" title="Click para cambiar el semáforo">${WK_SEM_LABEL[r.semaforo] || r.semaforo}</button>
         <input type="text" value="${escapeAttr(r.avance)}" placeholder="Avance..." onchange="updateJavierWeeklyField('${section}','${r.id}','avance',this.value)">
@@ -3557,7 +3579,7 @@ function renderJavierWeeklySectionTable(section, label){
             oninput="autoGrowTextarea(this)"
             onkeydown="handleWeeklyEstadoEnter(event,'${section}','${r.id}',this)"
           >${escapeHtml(r.estado)}</textarea>
-      ${renderJavierAttachments(section, r)}
+      ${renderJavierAttachments(section, r, `<span class="wk-order"><span class="wk-move"><button ${ri === 0 ? 'disabled' : ''} onclick="moveJavierWeeklyRow('${section}','${r.id}',-1)" title="Subir">▲</button><button ${ri === rows.length - 1 ? 'disabled' : ''} onclick="moveJavierWeeklyRow('${section}','${r.id}',1)" title="Bajar">▼</button></span><span class="wk-row-handle" draggable="true" ondragstart="wkRowDragStart(event,'${section}','${r.id}')" ondragend="wkRowDragEnd(event)" title="Arrastrá para reordenar">⠿</span></span>`)}
     </div>
   `).join('') : `<div class="empty-state">Nada cargado esta semana.</div>`;
   const open = rows.filter(r => r.semaforo !== 'verde').length;
@@ -3592,7 +3614,7 @@ function renderJavierWeekly(){
 // Se guardan como dataURL (base64) directo en el row: sin backend, viajan solos
 // con el resto del dato (localStorage, backup .json, sync a OneDrive y el
 // publish a Javier), sin tocar ningún otro flujo.
-function renderJavierAttachments(section, r){
+function renderJavierAttachments(section, r, extra){
   const adjuntos = r.adjuntos || [];
   const chips = adjuntos.map(a => {
     const thumb = a.esImagen
@@ -3609,6 +3631,8 @@ function renderJavierAttachments(section, r){
     <div class="weekly-attach-row" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;">
       ${chips}
       <button class="icon-btn" title="Adjuntar foto o archivo" onclick="openJavierAttachPicker('${section}','${r.id}')">📎</button>
+      ${renderJavierRowDate(section, r)}
+      ${extra || ''}
     </div>`;
 }
 
@@ -3801,7 +3825,7 @@ function copyJavierWeekRich(){
     const rows = bucket[s.key];
     if (rows.length){
       rows.forEach(r => {
-        text += `${semaforoTxt[r.semaforo] || '⚪'} ${r.avance || '(sin avance)'}\n`;
+        text += `${semaforoTxt[r.semaforo] || '⚪'} ${r.avance || '(sin avance)'}${r.fechaEst ? ` — Fecha estimada: ${fmtPrioFecha(r.fechaEst)}` : ''}\n`;
         if (r.estado && r.estado.trim()) text += `   ${r.estado.replace(/\n/g, '\n   ')}\n`;
         if (r.adjuntos && r.adjuntos.length){
           r.adjuntos.forEach(a => { text += `   📎 ${a.nombre}\n`; });
@@ -3837,6 +3861,7 @@ function copyJavierWeekRich(){
         html += `<div style="margin-bottom:8px;">`;
         html += `${semaforoTxt[r.semaforo] || '⚪'} `;
         html += `<b>${esc(r.avance || '(sin avance)')}</b>`;
+        if (r.fechaEst) html += ` <span style="font-size:12px;color:#3D5A73;background:#E2E9EE;border-radius:999px;padding:1px 8px;">📅 ${esc(fmtPrioFecha(r.fechaEst))}</span>`;
         if (r.estado && r.estado.trim()){
           html += `<div style="margin:2px 0 0 18px;color:#444;white-space:pre-wrap;">${esc(r.estado)}</div>`;
         }
@@ -4692,6 +4717,81 @@ function renderFocus(){
 
 
 
+
+// ---- v2.6: orden manual y fecha estimada de filas (riesgos / necesito / avances) ----
+let wkDrag = null;
+function moveJavierWeeklyRow(section, id, delta){
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const arr = bucket[section];
+  const from = arr.findIndex(r => r.id === id);
+  const to = from + delta;
+  if (from < 0 || to < 0 || to >= arr.length) return;
+  const [m] = arr.splice(from, 1);
+  arr.splice(to, 0, m);
+  save();
+  renderJavierWeeklyTables();
+}
+function wkRowDragStart(ev, section, id){
+  wkDrag = { section, id };
+  const row = ev.target.closest('.weekly-mail-row');
+  try { ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', id); if (row) ev.dataTransfer.setDragImage(row, 20, 20); } catch(e){}
+  if (row) setTimeout(() => row.classList.add('wk-dragging'), 0);
+}
+function wkRowDragOver(ev){
+  if (!wkDrag) return;
+  const row = ev.currentTarget;
+  if (row.dataset.wkSection !== wkDrag.section) return;
+  ev.preventDefault();
+  row.classList.add('wk-drag-over');
+}
+function wkRowDragLeave(ev){ ev.currentTarget.classList.remove('wk-drag-over'); }
+function wkRowDragEnd(){
+  wkDrag = null;
+  document.querySelectorAll('.weekly-mail-row.wk-dragging, .weekly-mail-row.wk-drag-over').forEach(el => el.classList.remove('wk-dragging', 'wk-drag-over'));
+}
+function wkRowDrop(ev, section, targetId){
+  ev.preventDefault();
+  const d = wkDrag; wkRowDragEnd();
+  if (!d || d.section !== section || d.id === targetId) return;
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const arr = bucket[section];
+  const from = arr.findIndex(r => r.id === d.id);
+  const to = arr.findIndex(r => r.id === targetId);
+  if (from < 0 || to < 0) return;
+  const [m] = arr.splice(from, 1);
+  arr.splice(to, 0, m);
+  save();
+  renderJavierWeeklyTables();
+}
+function fmtShortDate(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return isNaN(d) ? iso : d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+function renderJavierRowDate(section, r){
+  const has = !!r.fechaEst;
+  const late = has && r.semaforo !== 'verde' && r.fechaEst < localISODate(new Date());
+  return `<span class="wk-date">
+      <input type="date" value="${escapeAttr(r.fechaEst || '')}" onchange="setJavierRowDate('${section}','${r.id}', this.value)" tabindex="-1">
+      ${has
+        ? `<button class="wk-date-chip ${late ? 'late' : ''}" onclick="openWkDatePicker(this)" title="Fecha estimada de finalización${late ? ' (vencida)' : ''}">📅 ${fmtShortDate(r.fechaEst)}<span class="x" onclick="event.stopPropagation();setJavierRowDate('${section}','${r.id}','')" title="Quitar fecha">✕</span></button>`
+        : `<button class="wk-date-add" onclick="openWkDatePicker(this)" title="Agregar fecha estimada de finalización">📅</button>`}
+    </span>`;
+}
+function openWkDatePicker(btn){
+  const inp = btn.parentNode.querySelector('input[type=date]');
+  if (!inp) return;
+  try { if (inp.showPicker) { inp.showPicker(); return; } } catch(e){}
+  inp.style.pointerEvents = 'auto'; inp.focus(); inp.click();
+}
+function setJavierRowDate(section, id, val){
+  const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
+  const row = bucket[section].find(r => r.id === id);
+  if (!row) return;
+  row.fechaEst = val || '';
+  save();
+  renderJavierWeeklyTables();
+}
+
 // ---- v2.3: Historial de semanas anteriores ----
 let javierView = 'semana';
 let javierHistOpen = {};
@@ -4812,6 +4912,7 @@ function renderJavierHistoryList(){
         <div class="hist-row">
           <div class="hist-row-head"><span class="sem-pill ${r.semaforo}">${WK_SEM_LABEL[r.semaforo] || r.semaforo}</span><b>${hlText(r.avance || '(sin título)')}</b></div>
           ${r.estado && r.estado.replace(/[•\s]/g, '') ? `<div class="hist-estado">${hlText(r.estado)}</div>` : ''}
+          ${r.fechaEst ? `<span class="hist-due">📅 ${escapeHtml(fmtPrioFecha(r.fechaEst))}</span>` : ''}
           ${r.adjuntos && r.adjuntos.length ? `<div class="hist-att">${r.adjuntos.map(a => `<button onclick="openJavierHistAttachment('${key}','${sec.key}','${r.id}','${a.id}')">📎 ${escapeHtml(a.nombre)}</button>`).join('')}</div>` : ''}
         </div>`).join('') : '<div class="hist-empty">Nada cargado.</div>'}</div>`;
     }).join('');

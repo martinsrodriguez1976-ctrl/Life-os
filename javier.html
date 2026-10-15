@@ -130,6 +130,7 @@ function render(data){
       rows.forEach(function(r){
         html += '<div class="row">';
         html += (SEMAFORO_EMOJI[r.semaforo]||'⚪') + ' <span class="avance">' + esc(r.avance||'(sin avance)') + '</span>';
+        if (r.fechaEst) html += ' <span class="powner">📅 ' + esc(fmtDay(r.fechaEst)) + '</span>';
         if (r.estado && r.estado.trim()){
           html += '<div class="estado">' + esc(r.estado) + '</div>';
         }
