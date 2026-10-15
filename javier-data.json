@@ -1,7 +1,7 @@
 {
   "weekKey": "2026-10-12",
   "weekLabel": "Semana 42",
-  "publishedAt": "2026-10-15T12:48:58.019Z",
+  "publishedAt": "2026-10-15T16:35:38.588Z",
   "prioridades": [
     {
       "id": "id_ndrvg1xh",
@@ -9,7 +9,7 @@
       "tarea": "Comparar el desempeño del cubo antes y después de las actualizaciones, usando los reportes de las semanas 39–41 contra la semana actual. Pedir al proveedor o a mantenimiento el log de fallos con fecha, tipo de fallo, duración y causa. Armar un Pareto de fallos con cantidad y tiempo de parada por tipo.",
       "entregable": "Pareto de fallos más un veredicto: mejoró, no mejoró o no se puede concluir",
       "fecha": "2026-10-15",
-      "hecho": false,
+      "hecho": true,
       "semaforo": "verde"
     },
     {
@@ -18,7 +18,7 @@
       "tarea": "Proyectar la ocupación de VM hasta fin de octubre con el plan de producción y la demanda esperada. Definir el umbral crítico de posiciones y el plan de contingencia: transferencias a otros depósitos, almacenaje externo o reprogramación. Cuantificar el costo incremental de sostener ese stock.",
       "entregable": "Proyección de ocupación, plan de contingencia y costo de la decisión",
       "fecha": "2026-10-15",
-      "hecho": false,
+      "hecho": true,
       "semaforo": "rojo",
       "responsable": "Sabrina Martínez"
     },
@@ -28,7 +28,7 @@
       "tarea": "Relevar los ajustes de flete pendientes o solicitados por transportistas. Validar cada uno contra la paritaria, el gasoil y la fórmula de ajuste acordada. Definir qué se aprueba, qué se negocia y qué se rechaza.",
       "entregable": "Cuadro de ajustes con la recomendación para cada uno",
       "fecha": "2026-10-15",
-      "hecho": false,
+      "hecho": true,
       "semaforo": "rojo",
       "responsable": "Flavia Novoa"
     },
@@ -48,7 +48,7 @@
       "tarea": "Ejecutar lo acordado con Andrés. Cerrar la comunicación a los involucrados, los roles, la fecha efectiva y el traspaso de tareas.",
       "entregable": "Comunicación hecha y traspaso documentado",
       "fecha": "2026-10-15",
-      "hecho": false,
+      "hecho": true,
       "semaforo": "rojo",
       "responsable": "Martin Rodriguez"
     },
