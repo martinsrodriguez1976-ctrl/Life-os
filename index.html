@@ -865,6 +865,34 @@
   .ag-subs .subtasks{margin-top:6px;}
   .ag-subs .toggle-subtasks{margin-top:4px;}
   @media (max-width:900px){ .ag-subs{padding-left:0;} .prio-grid .ag-actions{flex-direction:column;} }
+
+  /* ==== v2.9: Agenda en dos columnas (Tareas | Proyectos) con tarjetas como Riesgos/Necesito/Avances ==== */
+  #panel-agenda .agenda-main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px;align-items:start;}
+  #panel-agenda .agenda-main > .focus{grid-column:1 / -1;}
+  @media (max-width:1000px){ #panel-agenda .agenda-main{grid-template-columns:minmax(0,1fr);} }
+  .ag-card{padding:14px 16px;}
+  .ag-card .weekly-mail-rows{gap:8px;}
+  .ag-item .weekly-mail-row-head{align-items:flex-start;}
+  .ag-item .weekly-mail-row-head .task-check{width:18px;height:18px;margin-top:4px;flex-shrink:0;font-size:11px;}
+  .ag-item .weekly-mail-row-head .estado-badge{margin-top:3px;flex-shrink:0;font-size:11px;}
+  .ag-item textarea.ag-title{flex:1;min-width:0;border:1px solid transparent;background:transparent;border-radius:6px;padding:3px 6px;font:600 14px 'Inter',sans-serif;color:var(--text-primary);resize:none;overflow:hidden;line-height:1.4;display:block;min-height:26px;}
+  .ag-item textarea.ag-title:focus{outline:none;border-color:var(--accent);background:var(--card);}
+  .ag-item textarea.weekly-estado-input{margin-left:0;width:100%;}
+  .ag-item.done textarea.ag-title, .ag-item.done textarea.weekly-estado-input{text-decoration:line-through;color:var(--text-tertiary);}
+  .ag-ent{display:flex;align-items:center;gap:6px;margin:2px 0 0;padding-left:6px;}
+  .ag-ent span{font-size:11.5px;font-weight:600;color:var(--text-secondary);flex-shrink:0;}
+  .ag-ent input{flex:1;min-width:0;border:1px solid transparent;background:transparent;border-radius:6px;padding:3px 6px;font:13px 'Inter',sans-serif;color:var(--text-primary);}
+  .ag-ent input:focus{outline:none;border-color:var(--accent);background:var(--card);}
+  .ag-foot{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;}
+  .ag-foot .prio-owner{margin:0;}
+  .ag-foot .prio-owner input{border:none;background:transparent;padding:1px 4px;font:600 12px 'Inter',sans-serif;color:var(--accent);width:110px;min-width:0;}
+  .ag-foot .prio-owner input::placeholder{color:var(--text-secondary);font-weight:500;}
+  .ag-foot .prio-owner input:focus{outline:none;}
+  .ag-foot .tag{font-size:10.5px;}
+  .ag-foot .ag-acts{margin-left:auto;display:inline-flex;gap:2px;}
+  @media (hover:hover){ .ag-item .ag-acts .icon-btn, .ag-item .weekly-mail-row-head > .icon-btn{opacity:.35;transition:opacity .15s;} .ag-item:hover .ag-acts .icon-btn, .ag-item:hover .weekly-mail-row-head > .icon-btn{opacity:1;} }
+  .ag-item .ag-subs{padding:6px 0 0 6px;}
+  .ag-item .ag-subs .subtasks{margin-top:4px;}
 </style>
 </head>
 <body>
@@ -2554,7 +2582,7 @@ function renderProjectItem(p){
     </div>`;
   return agRow('p', p, (typeof arguments[1] === 'number' ? arguments[1] : 0), {
     tags: p.subtasks.length ? `<span class="tag tag-proj">${doneSubs.length}/${p.subtasks.length} subtareas</span>` : '',
-    actions: `<button class="icon-btn" onclick="deleteProject('${p.id}')" title="Eliminar">✕</button><button class="icon-btn" onclick="openProjectFormForEdit('${p.id}')" title="Editar">✎</button><button class="icon-btn" onclick="addProjectSubtaskInline('${p.id}')" title="Agregar subtarea">+</button>`,
+    actions: `<button class="icon-btn" onclick="addProjectSubtaskInline('${p.id}')" title="Agregar subtarea">+</button><button class="icon-btn" onclick="openProjectFormForEdit('${p.id}')" title="Editar">✎</button>`,
     below: (p.subtasks.length || p.showSubtasks) ? subsHtml : ''
   });
 }
@@ -2584,7 +2612,7 @@ function renderProjects(){
 
   if (statusFilter === 'hechas'){
     grid.innerHTML = agTable(list.map(renderProjectItem).join(''));
-    grid.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea);
+    grid.querySelectorAll('.prio-grid textarea, .ag-item textarea').forEach(autoGrowTextarea);
     return;
   }
 
@@ -2596,7 +2624,7 @@ function renderProjects(){
     if (projectsArchiveOpen) html += `<div class="archive-list">${agTable(done.map(renderProjectItem).join(''))}</div>`;
   }
   grid.innerHTML = html;
-  grid.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea);
+  grid.querySelectorAll('.prio-grid textarea, .ag-item textarea').forEach(autoGrowTextarea);
 }
 function populateTaskProjSelects(){
   const optsHtml = data.projects.map(p => `<option value="${p.id}">${escapeHtml(p.title)}</option>`).join('');
@@ -2667,7 +2695,7 @@ function renderTaskItem(t, i){
   const proj = data.projects.find(p => p.id === t.projectId);
   return agRow('t', t, i || 0, {
     tags: proj ? `<span class="tag tag-proj">${escapeHtml(proj.title)}</span>` : '',
-    actions: `<button class="icon-btn" onclick="deleteTask('${t.id}')" title="Eliminar">✕</button><button class="icon-btn" onclick="openTaskFormForEdit('${t.id}')" title="Editar / cambiar proyecto">✎</button>`
+    actions: `<button class="icon-btn" onclick="openTaskFormForEdit('${t.id}')" title="Editar / cambiar proyecto">✎</button>`
   });
 }
 
@@ -2693,7 +2721,7 @@ function renderTasks(){
 
   if (statusFilter === 'hechas'){
     listEl.innerHTML = agTable(list.map(renderTaskItem).join(''));
-    listEl.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea);
+    listEl.querySelectorAll('.prio-grid textarea, .ag-item textarea').forEach(autoGrowTextarea);
     return;
   }
 
@@ -2705,7 +2733,7 @@ function renderTasks(){
     if (tasksArchiveOpen) html += `<div class="archive-list">${agTable(done.map(renderTaskItem).join(''))}</div>`;
   }
   listEl.innerHTML = html;
-  listEl.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea);
+  listEl.querySelectorAll('.prio-grid textarea, .ag-item textarea').forEach(autoGrowTextarea);
 }
 
 // ---- Metrics ----
@@ -4841,7 +4869,7 @@ function renderFocus(){
 // ---- v2.8: Agenda en formato tabla (igual a Reunión con Javier) ----
 function agTable(rowsHtml){
   if (!rowsHtml) return '';
-  return `<div class="wk-card ag-card"><div class="priority-list prio-table">${'<div class="prio-head"><span>#</span><span>Tema</span><span>Tareas concretas</span><span>Entregable</span><span>Horizonte ↑</span><span></span></div>'}${rowsHtml}</div></div>`;
+  return `<div class="wk-card ag-card"><div class="weekly-mail-rows">${rowsHtml}</div></div>`;
 }
 function refreshAgOwnerList(){
   const dl = document.getElementById('agOwnerList');
@@ -4862,27 +4890,36 @@ function agIsLate(item){
   return !!item.due && !item.done && item.due < localISODate(new Date());
 }
 function agRow(kind, it, i, opts){
-  const k = kind;
-  const id = it.id;
-  const done = !!it.done;
+  const k = kind, id = it.id, done = !!it.done;
   const toggleFn = k === 'p' ? `toggleProjectDone('${id}')` : `toggleTask('${id}')`;
   const estadoFn = k === 'p' ? `cycleProjectEstado('${id}')` : `cycleTaskEstado('${id}')`;
+  const delFn = k === 'p' ? `deleteProject('${id}')` : `deleteTask('${id}')`;
+  const late = agIsLate(it);
+  const dateCtl = `<span class="wk-date">
+      <input type="date" value="${escapeAttr(it.due || '')}" onchange="updateAgendaField('${k}','${id}','due', this.value)" tabindex="-1">
+      ${it.due
+        ? `<button class="wk-date-chip ${late ? 'late' : ''}" onclick="openWkDatePicker(this)" title="Fecha programada${late ? ' (vencida)' : ''}">📅 ${fmtShortDate(it.due)}<span class="x" onclick="event.stopPropagation();updateAgendaField('${k}','${id}','due','')" title="Quitar fecha">✕</span></button>`
+        : `<button class="wk-date-add" onclick="openWkDatePicker(this)" title="Agregar fecha programada">📅</button>`}
+    </span>`;
   return `
-    <div class="priority-row prio-grid ${done ? 'done' : ''}">
-      <span></span>
-      <span class="priority-rank">${i + 1}</span>
-      <div class="task-check ${done ? 'done' : ''}" onclick="${toggleFn}" title="Marcar como terminad${k === 'p' ? 'o' : 'a'}">${done ? '✓' : ''}</div>
-      <div class="prio-cell prio-c-tema"><textarea rows="1" class="prio-tema" placeholder="Tema..." oninput="autoGrowTextarea(this)" onchange="updateAgendaField('${k}','${id}','title', this.value)">${escapeHtml(it.title || '')}</textarea>${opts.tags ? `<div class="ag-tags">${opts.tags}</div>` : ''}</div>
-      <div class="prio-cell"><div class="prio-lbl">Tareas concretas</div><textarea rows="1" placeholder="Tareas concretas..." oninput="autoGrowTextarea(this)" onchange="updateAgendaField('${k}','${id}','description', this.value)">${escapeHtml(it.description || '')}</textarea></div>
-      <div class="prio-cell"><div class="prio-lbl">Entregable</div><textarea rows="1" placeholder="Entregable..." oninput="autoGrowTextarea(this)" onchange="updateAgendaField('${k}','${id}','entregable', this.value)">${escapeHtml(it.entregable || '')}</textarea></div>
-      <div class="prio-cell prio-c-fecha"><div class="prio-lbl">Horizonte</div><input type="date" class="${agIsLate(it) ? 'late' : ''}" title="${agIsLate(it) ? 'Vencida' : 'Fecha programada'}" value="${escapeAttr(it.due || '')}" onchange="updateAgendaField('${k}','${id}','due', this.value)">
+    <div class="weekly-mail-row ag-item ${done ? 'done' : ''}">
+      <div class="weekly-mail-row-head">
+        <div class="task-check ${done ? 'done' : ''}" onclick="${toggleFn}" title="Marcar como terminad${k === 'p' ? 'o' : 'a'}">${done ? '✓' : ''}</div>
+        <button class="estado-badge estado-${it.estado || 'no_iniciado'}" onclick="${estadoFn}" title="Click para cambiar el estado">${estadoLabel(it.estado)}</button>
+        <textarea rows="1" class="ag-title" placeholder="Tema..." oninput="autoGrowTextarea(this)" onchange="updateAgendaField('${k}','${id}','title', this.value)">${escapeHtml(it.title || '')}</textarea>
+        <button class="icon-btn" onclick="${delFn}" title="Eliminar">✕</button>
+      </div>
+      <textarea class="weekly-estado-input" rows="1" placeholder="Tareas concretas..." oninput="autoGrowTextarea(this)" onchange="updateAgendaField('${k}','${id}','description', this.value)">${escapeHtml(it.description || '')}</textarea>
+      <div class="ag-ent"><span>Entregable:</span><input type="text" placeholder="—" value="${escapeAttr(it.entregable || '')}" onchange="updateAgendaField('${k}','${id}','entregable', this.value)"></div>
+      <div class="ag-foot">
+        ${dateCtl}
         <label class="prio-owner ${it.responsable ? '' : 'empty'}" title="Responsable"><input type="text" list="agOwnerList" placeholder="Asignar a…" value="${escapeAttr(it.responsable || '')}" oninput="this.parentNode.classList.toggle('empty', !this.value)" onchange="updateAgendaField('${k}','${id}','responsable', this.value)"></label>
-        <button class="estado-badge estado-${it.estado || 'no_iniciado'}" onclick="${estadoFn}" title="Click para cambiar el estado">${estadoLabel(it.estado)}</button></div>
-      <div class="priority-actions ag-actions">${opts.actions}</div>
+        ${opts.tags || ''}
+        <span class="ag-acts">${opts.actions || ''}</span>
+      </div>
       ${opts.below || ''}
     </div>`;
 }
-
 // ---- v2.6: orden manual y fecha estimada de filas (riesgos / necesito / avances) ----
 let wkDrag = null;
 function moveJavierWeeklyRow(section, id, delta){
@@ -5103,7 +5140,7 @@ function renderJavierHistoryList(){
 // ---- v2: helpers de Colaboradores y Reunión con Javier ----
 document.addEventListener('click', (ev) => {
   if (ev.target.closest && ev.target.closest('nav.tabs button, nav.subnav button, #javierViewSwitch button')) {
-    setTimeout(() => document.querySelectorAll('.prio-grid textarea, textarea.weekly-estado-input').forEach(autoGrowTextarea), 30);
+    setTimeout(() => document.querySelectorAll('.prio-grid textarea, textarea.weekly-estado-input, .ag-item textarea').forEach(autoGrowTextarea), 30);
   }
 });
 window.addEventListener('resize', () => {
