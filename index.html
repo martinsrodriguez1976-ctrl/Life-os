@@ -845,6 +845,26 @@
   .pj-ok{color:var(--green-ink);font-weight:600;}
   .pj-err{color:var(--red-ink);font-weight:600;}
   .pj-link{color:var(--accent);font-weight:600;}
+
+  /* ==== v2.8: Agenda (tareas y proyectos) con el formato de Reunión con Javier ==== */
+  #panel-agenda .task-list.ag-mode, #panel-agenda .ag-mode .archive-list{background:transparent;border:none;box-shadow:none;border-radius:0;overflow:visible;gap:12px;}
+  #panel-agenda .ag-mode > .folder-toggle{border-top:none;padding:6px 4px;margin:0;}
+  .ag-card{padding:12px 14px;}
+  /* Con las tablas, Agenda pasa a una sola columna: las tablas necesitan todo el ancho; métricas abajo */
+  #panel-agenda .agenda-grid{grid-template-columns:minmax(0,1fr);}
+  #panel-agenda .agenda-grid .agenda-side .metrics-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+  .ag-card .prio-table{gap:6px;}
+  .prio-grid .ag-actions{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:2px;}
+  .prio-grid .ag-actions .icon-btn{padding:2px 4px;}
+  @media (hover:hover){ .prio-grid .ag-actions .icon-btn{opacity:.35;} .priority-row.prio-grid:hover .ag-actions .icon-btn{opacity:1;} }
+  .prio-c-tema .ag-tags{display:flex;flex-wrap:wrap;gap:4px;margin:2px 0 0 6px;}
+  .prio-c-tema .ag-tags .tag{font-size:10.5px;}
+  .prio-c-fecha .estado-badge{display:block;width:fit-content;margin:4px 0 0 6px;font-size:11px;}
+  .prio-grid input[type=date].late{color:var(--red-ink);font-weight:600;}
+  .ag-subs{grid-column:1 / -1;padding:2px 0 4px 62px;}
+  .ag-subs .subtasks{margin-top:6px;}
+  .ag-subs .toggle-subtasks{margin-top:4px;}
+  @media (max-width:900px){ .ag-subs{padding-left:0;} .prio-grid .ag-actions{flex-direction:column;} }
 </style>
 </head>
 <body>
@@ -954,6 +974,7 @@
 
   <!-- AGENDA (tareas + proyectos + métricas, todo en la misma hoja) -->
   <section class="panel active" id="panel-agenda">
+   <datalist id="agOwnerList"></datalist>
    <div class="agenda-grid">
    <div class="agenda-main">
 
@@ -2521,36 +2542,21 @@ function renderProjectItem(p){
     </div>`;
   };
 
-  return `
-    <div class="task-item">
-      <div class="task-main">
-        <div class="task-check ${p.done ? 'done' : ''}" onclick="toggleProjectDone('${p.id}')" title="Marcar como terminado">${p.done ? '✓' : ''}</div>
-        <div class="task-body">
-          <div class="task-title-row">
-            <div class="task-title ${p.done ? 'done' : ''}">${escapeHtml(p.title)}</div>
-            <div class="title-badges">
-              <span class="estado-badge estado-${p.estado || 'no_iniciado'}" onclick="cycleProjectEstado('${p.id}')" title="Click para cambiar el estado">${estadoLabel(p.estado)}</span>
-              ${p.due ? `<span class="subtask-due-badge ${subtaskDueClass(p.due)}">${fmtDate(p.due)}</span>` : ''}
-            </div>
-          </div>
-          ${p.description ? `<div class="task-desc ${p.done ? 'done' : ''}">${escapeHtml(p.description)}</div>` : ''}
-          <div class="task-tags">
-            ${p.subtasks.length ? `<span class="tag tag-proj">${doneSubs.length}/${p.subtasks.length} subtareas</span>` : ''}
-          </div>
-          ${p.showSubtasks ? `
-            <div class="subtasks">
-              ${activeSubs.map(renderSub).join('')}
-              ${doneSubs.length ? `<button class="subtask-folder-toggle" onclick="toggleProjectSubtaskArchive('${p.id}')">${p.showDoneSubtasks ? '📂' : '📁'} Completadas (${doneSubs.length})</button>` : ''}
-              ${p.showDoneSubtasks ? doneSubs.map(renderSub).join('') : ''}
-            </div>
-          ` : ''}
-          <button class="toggle-subtasks" onclick="toggleProjectSubtaskView('${p.id}')">${p.showSubtasks ? 'Ocultar subtareas' : 'Ver subtareas'}</button>
-        </div>
-        <button class="icon-btn task-del" onclick="addProjectSubtaskInline('${p.id}')" title="Agregar subtarea">+</button>
-        <button class="icon-btn task-del" onclick="openProjectFormForEdit('${p.id}')" title="Editar">✎</button>
-        <button class="icon-btn task-del" onclick="deleteProject('${p.id}')" title="Eliminar">✕</button>
-      </div>
+  const subsHtml = `
+    <div class="ag-subs">
+      ${p.showSubtasks && p.subtasks.length ? `
+        <div class="subtasks">
+          ${activeSubs.map(renderSub).join('')}
+          ${doneSubs.length ? `<button class="subtask-folder-toggle" onclick="toggleProjectSubtaskArchive('${p.id}')">${p.showDoneSubtasks ? '📂' : '📁'} Completadas (${doneSubs.length})</button>` : ''}
+          ${p.showDoneSubtasks ? doneSubs.map(renderSub).join('') : ''}
+        </div>` : ''}
+      ${p.subtasks.length ? `<button class="toggle-subtasks" onclick="toggleProjectSubtaskView('${p.id}')">${p.showSubtasks ? 'Ocultar subtareas' : 'Ver subtareas'}</button>` : ''}
     </div>`;
+  return agRow('p', p, (typeof arguments[1] === 'number' ? arguments[1] : 0), {
+    tags: p.subtasks.length ? `<span class="tag tag-proj">${doneSubs.length}/${p.subtasks.length} subtareas</span>` : '',
+    actions: `<button class="icon-btn" onclick="deleteProject('${p.id}')" title="Eliminar">✕</button><button class="icon-btn" onclick="openProjectFormForEdit('${p.id}')" title="Editar">✎</button><button class="icon-btn" onclick="addProjectSubtaskInline('${p.id}')" title="Agregar subtarea">+</button>`,
+    below: (p.subtasks.length || p.showSubtasks) ? subsHtml : ''
+  });
 }
 function toggleProjectSubtaskArchive(projectId){
   const p = data.projects.find(x => x.id === projectId);
@@ -2567,6 +2573,7 @@ function toggleProjectsArchive(){
 function renderProjects(){
   const statusFilter = document.getElementById('projStatusFilter').value;
   const grid = document.getElementById('projGrid');
+  grid.classList.add('ag-mode'); refreshAgOwnerList();
   let list = data.projects.filter(p => {
     if (statusFilter === 'pendientes' && p.done) return false;
     if (statusFilter === 'hechas' && !p.done) return false;
@@ -2576,18 +2583,20 @@ function renderProjects(){
   if (list.length === 0){ grid.innerHTML = '<div class="empty-state">No hay proyectos para mostrar.</div>'; return; }
 
   if (statusFilter === 'hechas'){
-    grid.innerHTML = list.map(renderProjectItem).join('');
+    grid.innerHTML = agTable(list.map(renderProjectItem).join(''));
+    grid.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea);
     return;
   }
 
   const active = list.filter(p => !p.done);
   const done = list.filter(p => p.done);
-  let html = active.length ? active.map(renderProjectItem).join('') : '<div class="empty-state">No hay proyectos pendientes.</div>';
+  let html = active.length ? agTable(active.map(renderProjectItem).join('')) : '<div class="empty-state">No hay proyectos pendientes.</div>';
   if (done.length){
     html += `<button class="folder-toggle" onclick="toggleProjectsArchive()">${projectsArchiveOpen ? '📂' : '📁'} Completados (${done.length})</button>`;
-    if (projectsArchiveOpen) html += `<div class="archive-list">${done.map(renderProjectItem).join('')}</div>`;
+    if (projectsArchiveOpen) html += `<div class="archive-list">${agTable(done.map(renderProjectItem).join(''))}</div>`;
   }
   grid.innerHTML = html;
+  grid.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea);
 }
 function populateTaskProjSelects(){
   const optsHtml = data.projects.map(p => `<option value="${p.id}">${escapeHtml(p.title)}</option>`).join('');
@@ -2654,28 +2663,12 @@ function dueStatus(dueStr){
   if (diffDays <= 2) return { cls: 'due-soon', label: diffDays === 0 ? 'Vence hoy' : `Vence en ${diffDays}d` };
   return { cls: 'due-ok', label: `Vence: ${due.toLocaleDateString('es-AR', {day:'2-digit', month:'2-digit'})}` };
 }
-function renderTaskItem(t){
+function renderTaskItem(t, i){
   const proj = data.projects.find(p => p.id === t.projectId);
-
-  return `
-    <div class="task-item">
-      <div class="task-main">
-        <div class="task-check ${t.done ? 'done' : ''}" onclick="toggleTask('${t.id}')" title="Marcar como terminada">${t.done ? '✓' : ''}</div>
-        <div class="task-body">
-          <div class="task-title-row">
-            <div class="task-title ${t.done ? 'done' : ''}">${escapeHtml(t.title)}</div>
-            <div class="title-badges">
-              <span class="estado-badge estado-${t.estado || 'no_iniciado'}" onclick="cycleTaskEstado('${t.id}')" title="Click para cambiar el estado">${estadoLabel(t.estado)}</span>
-              ${t.due ? `<span class="subtask-due-badge ${subtaskDueClass(t.due)}">${fmtDate(t.due)}</span>` : ''}
-            </div>
-          </div>
-          ${t.description ? `<div class="task-desc ${t.done ? 'done' : ''}">${escapeHtml(t.description)}</div>` : ''}
-          ${proj ? `<div class="task-tags"><span class="tag tag-proj">${escapeHtml(proj.name)}</span></div>` : ''}
-        </div>
-        <button class="icon-btn task-del" onclick="openTaskFormForEdit('${t.id}')" title="Editar">✎</button>
-        <button class="icon-btn task-del" onclick="deleteTask('${t.id}')" title="Eliminar">✕</button>
-      </div>
-    </div>`;
+  return agRow('t', t, i || 0, {
+    tags: proj ? `<span class="tag tag-proj">${escapeHtml(proj.title)}</span>` : '',
+    actions: `<button class="icon-btn" onclick="deleteTask('${t.id}')" title="Eliminar">✕</button><button class="icon-btn" onclick="openTaskFormForEdit('${t.id}')" title="Editar / cambiar proyecto">✎</button>`
+  });
 }
 
 let tasksArchiveOpen = false;
@@ -2695,21 +2688,24 @@ function renderTasks(){
   list = list.slice().sort((a,b) => (a.due || '9999').localeCompare(b.due || '9999'));
 
   const listEl = document.getElementById('taskList');
+  listEl.classList.add('ag-mode'); refreshAgOwnerList();
   if (list.length === 0){ listEl.innerHTML = '<div class="empty-state">No hay tareas para mostrar.</div>'; return; }
 
   if (statusFilter === 'hechas'){
-    listEl.innerHTML = list.map(renderTaskItem).join('');
+    listEl.innerHTML = agTable(list.map(renderTaskItem).join(''));
+    listEl.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea);
     return;
   }
 
   const active = list.filter(t => !t.done);
   const done = list.filter(t => t.done);
-  let html = active.length ? active.map(renderTaskItem).join('') : '<div class="empty-state">No hay tareas pendientes.</div>';
+  let html = active.length ? agTable(active.map(renderTaskItem).join('')) : '<div class="empty-state">No hay tareas pendientes.</div>';
   if (done.length){
     html += `<button class="folder-toggle" onclick="toggleTasksArchive()">${tasksArchiveOpen ? '📂' : '📁'} Completadas (${done.length})</button>`;
-    if (tasksArchiveOpen) html += `<div class="archive-list">${done.map(renderTaskItem).join('')}</div>`;
+    if (tasksArchiveOpen) html += `<div class="archive-list">${agTable(done.map(renderTaskItem).join(''))}</div>`;
   }
   listEl.innerHTML = html;
+  listEl.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea);
 }
 
 // ---- Metrics ----
@@ -3484,6 +3480,7 @@ function addJavierWeeklyRow(section){
 }
 
 function autoGrowTextarea(el){
+  if (!el.offsetParent) { el.style.height = ''; return; } // oculto (otra solapa): se recalcula al mostrarse
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
 }
@@ -4840,6 +4837,52 @@ function renderFocus(){
 
 
 
+
+// ---- v2.8: Agenda en formato tabla (igual a Reunión con Javier) ----
+function agTable(rowsHtml){
+  if (!rowsHtml) return '';
+  return `<div class="wk-card ag-card"><div class="priority-list prio-table">${'<div class="prio-head"><span>#</span><span>Tema</span><span>Tareas concretas</span><span>Entregable</span><span>Horizonte ↑</span><span></span></div>'}${rowsHtml}</div></div>`;
+}
+function refreshAgOwnerList(){
+  const dl = document.getElementById('agOwnerList');
+  if (dl) dl.innerHTML = (data.collaborators || []).map(c => `<option value="${escapeAttr(c.name)}">`).join('');
+}
+function updateAgendaField(kind, id, field, val){
+  if (!['title','description','entregable','due','responsable'].includes(field)) return;
+  const arr = kind === 'p' ? data.projects : data.tasks;
+  const it = arr.find(x => x.id === id);
+  if (!it) return;
+  if (field === 'title' && !String(val).trim()){ kind === 'p' ? renderProjects() : renderTasks(); return; }
+  it[field] = field === 'title' || field === 'responsable' ? String(val).trim() : val;
+  save();
+  if (field === 'due') { kind === 'p' ? renderProjects() : renderTasks(); }
+  if (kind === 'p' && field === 'title') { populateTaskProjSelects(); renderTasks(); }
+}
+function agIsLate(item){
+  return !!item.due && !item.done && item.due < localISODate(new Date());
+}
+function agRow(kind, it, i, opts){
+  const k = kind;
+  const id = it.id;
+  const done = !!it.done;
+  const toggleFn = k === 'p' ? `toggleProjectDone('${id}')` : `toggleTask('${id}')`;
+  const estadoFn = k === 'p' ? `cycleProjectEstado('${id}')` : `cycleTaskEstado('${id}')`;
+  return `
+    <div class="priority-row prio-grid ${done ? 'done' : ''}">
+      <span></span>
+      <span class="priority-rank">${i + 1}</span>
+      <div class="task-check ${done ? 'done' : ''}" onclick="${toggleFn}" title="Marcar como terminad${k === 'p' ? 'o' : 'a'}">${done ? '✓' : ''}</div>
+      <div class="prio-cell prio-c-tema"><textarea rows="1" class="prio-tema" placeholder="Tema..." oninput="autoGrowTextarea(this)" onchange="updateAgendaField('${k}','${id}','title', this.value)">${escapeHtml(it.title || '')}</textarea>${opts.tags ? `<div class="ag-tags">${opts.tags}</div>` : ''}</div>
+      <div class="prio-cell"><div class="prio-lbl">Tareas concretas</div><textarea rows="1" placeholder="Tareas concretas..." oninput="autoGrowTextarea(this)" onchange="updateAgendaField('${k}','${id}','description', this.value)">${escapeHtml(it.description || '')}</textarea></div>
+      <div class="prio-cell"><div class="prio-lbl">Entregable</div><textarea rows="1" placeholder="Entregable..." oninput="autoGrowTextarea(this)" onchange="updateAgendaField('${k}','${id}','entregable', this.value)">${escapeHtml(it.entregable || '')}</textarea></div>
+      <div class="prio-cell prio-c-fecha"><div class="prio-lbl">Horizonte</div><input type="date" class="${agIsLate(it) ? 'late' : ''}" title="${agIsLate(it) ? 'Vencida' : 'Fecha programada'}" value="${escapeAttr(it.due || '')}" onchange="updateAgendaField('${k}','${id}','due', this.value)">
+        <label class="prio-owner ${it.responsable ? '' : 'empty'}" title="Responsable"><input type="text" list="agOwnerList" placeholder="Asignar a…" value="${escapeAttr(it.responsable || '')}" oninput="this.parentNode.classList.toggle('empty', !this.value)" onchange="updateAgendaField('${k}','${id}','responsable', this.value)"></label>
+        <button class="estado-badge estado-${it.estado || 'no_iniciado'}" onclick="${estadoFn}" title="Click para cambiar el estado">${estadoLabel(it.estado)}</button></div>
+      <div class="priority-actions ag-actions">${opts.actions}</div>
+      ${opts.below || ''}
+    </div>`;
+}
+
 // ---- v2.6: orden manual y fecha estimada de filas (riesgos / necesito / avances) ----
 let wkDrag = null;
 function moveJavierWeeklyRow(section, id, delta){
@@ -5058,6 +5101,11 @@ function renderJavierHistoryList(){
 }
 
 // ---- v2: helpers de Colaboradores y Reunión con Javier ----
+document.addEventListener('click', (ev) => {
+  if (ev.target.closest && ev.target.closest('nav.tabs button, nav.subnav button, #javierViewSwitch button')) {
+    setTimeout(() => document.querySelectorAll('.prio-grid textarea, textarea.weekly-estado-input').forEach(autoGrowTextarea), 30);
+  }
+});
 window.addEventListener('resize', () => {
   clearTimeout(window.__prioGrowT);
   window.__prioGrowT = setTimeout(() => document.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea), 150);
