@@ -798,7 +798,7 @@
   .hist-att{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
   .hist-att button{border:none;background:var(--card);border-radius:8px;padding:3px 8px;font-size:11.5px;color:var(--accent);cursor:pointer;}
   .hist-empty{font-size:13px;color:var(--text-secondary);padding:4px 0;}
-  .hist-foot{display:flex;justify-content:flex-end;margin-top:14px;}
+  .hist-foot{display:flex;justify-content:flex-end;flex-wrap:wrap;margin-top:14px;}
   .hist-none{background:var(--card);border:1px dashed var(--border);border-radius:var(--radius-lg);padding:28px;text-align:center;color:var(--text-secondary);font-size:14px;}
   mark.hl{background:#F5EDDD;color:inherit;border-radius:3px;padding:0 1px;}
 
@@ -1129,7 +1129,7 @@
           <div class="page-sub" id="javierWeekSummary"></div>
         </div>
         <div class="page-actions" id="javierPageActions">
-          <button class="btn-secondary" onclick="copyJavierWeekForward()" title="Copia todo el contenido de esta semana (prioridades, riesgos, necesito, avances) tal cual a la semana siguiente, para no tener que volver a escribirlo">→ Copiar a la semana siguiente</button>
+          <button class="btn-secondary" onclick="copyJavierWeekForward()" title="Copia esta semana a otra: prioridades pendientes + riesgos, necesito y avances">→ Copiar a otra semana</button>
           <button class="btn-secondary" onclick="copyJavierWeekRich()" title="Copia el resumen de la semana con el mismo formato de la pantalla, listo para pegar en mail, Teams, OneNote, etc.">⧉ Copiar resumen</button>
           <button class="btn-add" onclick="publishJavierSnapshot()" title="Publica el resumen de esta semana en el link de solo lectura para Javier">↗ Publicar para Javier</button>
         </div>
@@ -3454,7 +3454,73 @@ function getNextJavierWeekKey(key){
   return weekKey(d);
 }
 
-function copyJavierWeekForward(){
+function copyJavierWeekForward(){ openJavierCopyDialog(selectedJavierWeekKey); }
+
+// ---- v3.0: copiar cualquier semana (también las pasadas) a otra semana ----
+// Prioridades: solo las NO terminadas. Riesgos / Necesito / Avances: todos.
+// Destino con contenido: "Agregar sin duplicar" (por defecto) o "Reemplazar".
+let javierCopySourceKey = null;
+function javierBucketHasContent(b){
+  return !!(b && ((b.prioridades && b.prioridades.length) || (b.riesgos && b.riesgos.length) || (b.necesito && b.necesito.length) || (b.avances && b.avances.length)));
+}
+function openJavierCopyDialog(sourceKey){
+  javierCopySourceKey = sourceKey;
+  const curKey = weekKey(new Date());
+  const keys = [];
+  let d = new Date((sourceKey < curKey ? curKey : getNextJavierWeekKey(sourceKey)) + 'T00:00:00');
+  for (let i = 0; i < 10; i++){ const k = weekKey(d); if (k !== sourceKey) keys.push(k); d.setDate(d.getDate() + 7); }
+  const def = keys[0];
+  const src = data.javierWeekly[sourceKey] || {};
+  const pend = (src.prioridades || []).filter(p => !p.hecho).length;
+  const rows = ['riesgos','necesito','avances'].reduce((n, k) => n + (src[k] || []).length, 0);
+  pjShow(`Copiar ${formatJavierWeekTabLabel(sourceKey)}`, `
+    <div class="field"><label>Copiar a</label>
+      <select id="jcDest" onchange="updateJavierCopyHint()">${keys.map(k => `<option value="${k}">${formatJavierWeekTabLabel(k)} · ${javierWeekRange(k)}${k === curKey ? ' (en curso)' : ''}</option>`).join('')}</select></div>
+    <p class="pj-note">Se copian <b>${pend}</b> ${pend === 1 ? 'prioridad pendiente' : 'prioridades pendientes'} (las terminadas no pasan) y <b>${rows}</b> ${rows === 1 ? 'fila' : 'filas'} de Riesgos, Necesito y Avances.</p>
+    <div id="jcModeWrap" class="field" style="display:none;"><label>La semana destino ya tiene contenido</label>
+      <label style="display:flex;gap:8px;align-items:center;font-weight:400;color:var(--text-primary);margin:4px 0;"><input type="radio" style="width:auto;margin:0;flex-shrink:0;" name="jcMode" value="merge" checked> Agregar a lo que ya tiene (sin duplicar)</label>
+      <label style="display:flex;gap:8px;align-items:center;font-weight:400;color:var(--text-primary);"><input type="radio" style="width:auto;margin:0;flex-shrink:0;" name="jcMode" value="replace"> Reemplazar todo</label>
+    </div>
+    <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('publishJavierModal')">Cancelar</button><button class="btn-add" onclick="doJavierCopy()">Copiar</button></div>`);
+  document.getElementById('jcDest').value = def;
+  updateJavierCopyHint();
+}
+function updateJavierCopyHint(){
+  const k = document.getElementById('jcDest').value;
+  document.getElementById('jcModeWrap').style.display = javierBucketHasContent(data.javierWeekly[k]) ? '' : 'none';
+}
+function doJavierCopy(){
+  const sourceKey = javierCopySourceKey;
+  const dest = document.getElementById('jcDest').value;
+  const modeEl = document.querySelector('input[name="jcMode"]:checked');
+  const replace = javierBucketHasContent(data.javierWeekly[dest]) && modeEl && modeEl.value === 'replace';
+  const src = data.javierWeekly[sourceKey] || {};
+  const carry = (r) => ({ ...r, id: cid() });
+  const norm = (t) => String(t || '').trim().toLowerCase();
+  const target = replace ? { prioridades: [], riesgos: [], necesito: [], avances: [] } : ensureJavierWeekBucket(dest);
+  ['prioridades','riesgos','necesito','avances'].forEach(k => { if (!target[k]) target[k] = []; });
+  let added = 0;
+  const addRows = (k, rows, keyField) => {
+    const seen = new Set(target[k].map(r => norm(r[keyField])));
+    rows.forEach(r => {
+      const key = norm(r[keyField]);
+      if (key && seen.has(key)) return;
+      seen.add(key); target[k].push(carry(r)); added++;
+    });
+  };
+  addRows('prioridades', (src.prioridades || []).filter(p => !p.hecho).map(p => ({ ...p, hecho: false })), 'texto');
+  ['riesgos','necesito','avances'].forEach(k => addRows(k, src[k] || [], 'avance'));
+  sortPrioridadesByFecha(target.prioridades);
+  data.javierWeekly[dest] = target;
+  save();
+  closeModal('publishJavierModal');
+  selectedJavierWeekKey = dest;
+  javierView = 'semana';
+  renderJavierWeekly();
+  showToast(`${formatJavierWeekTabLabel(sourceKey)} → ${formatJavierWeekTabLabel(dest)}: ${added} ${added === 1 ? 'ítem copiado' : 'ítems copiados'}${replace ? ' (reemplazado)' : ''}.`);
+}
+
+function copyJavierWeekForwardLegacy(){
   const nextKey = getNextJavierWeekKey(selectedJavierWeekKey);
   const existing = data.javierWeekly[nextKey];
   const hasContent = existing && (
@@ -4913,7 +4979,7 @@ function agRow(kind, it, i, opts){
       <div class="ag-ent"><span>Entregable:</span><input type="text" placeholder="—" value="${escapeAttr(it.entregable || '')}" onchange="updateAgendaField('${k}','${id}','entregable', this.value)"></div>
       <div class="ag-foot">
         ${dateCtl}
-        <label class="prio-owner ${it.responsable ? '' : 'empty'}" title="Responsable"><input type="text" list="agOwnerList" placeholder="Asignar a…" value="${escapeAttr(it.responsable || '')}" oninput="this.parentNode.classList.toggle('empty', !this.value)" onchange="updateAgendaField('${k}','${id}','responsable', this.value)"></label>
+        ${k === 'p' ? '' : `<label class="prio-owner ${it.responsable ? '' : 'empty'}" title="Responsable"><input type="text" list="agOwnerList" placeholder="Asignar a…" value="${escapeAttr(it.responsable || '')}" oninput="this.parentNode.classList.toggle('empty', !this.value)" onchange="updateAgendaField('${k}','${id}','responsable', this.value)"></label>`}
         ${opts.tags || ''}
         <span class="ag-acts">${opts.actions || ''}</span>
       </div>
@@ -5131,7 +5197,7 @@ function renderJavierHistoryList(){
         <div class="hist-sec-title">Prioridades para la reunión</div>
         ${prioHtml}
         <div class="hist-cols">${secHtml}</div>
-        <div class="hist-foot"><button class="btn-secondary" onclick="openJavierWeekForEdit('${key}')">✎ Abrir esta semana para editar</button></div>
+        <div class="hist-foot" style="gap:8px;"><button class="btn-secondary" onclick="openJavierCopyDialog('${key}')">→ Copiar a otra semana</button><button class="btn-secondary" onclick="openJavierWeekForEdit('${key}')">✎ Abrir para editar</button></div>
       </div>
     </div>`;
   }).join('');
