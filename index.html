@@ -1129,7 +1129,7 @@
           <div class="page-sub" id="javierWeekSummary"></div>
         </div>
         <div class="page-actions" id="javierPageActions">
-          <button class="btn-secondary" onclick="copyJavierWeekForward()" title="Copia esta semana a otra: prioridades pendientes + riesgos, necesito y avances">→ Copiar a otra semana</button>
+          <button class="btn-secondary" onclick="copyJavierWeekForward()" title="Copia esta semana a otra: prioridades pendientes + riesgos, necesito y avances">⇄ Copiar semana</button>
           <button class="btn-secondary" onclick="copyJavierWeekRich()" title="Copia el resumen de la semana con el mismo formato de la pantalla, listo para pegar en mail, Teams, OneNote, etc.">⧉ Copiar resumen</button>
           <button class="btn-add" onclick="publishJavierSnapshot()" title="Publica el resumen de esta semana en el link de solo lectura para Javier">↗ Publicar para Javier</button>
         </div>
@@ -3454,7 +3454,7 @@ function getNextJavierWeekKey(key){
   return weekKey(d);
 }
 
-function copyJavierWeekForward(){ openJavierCopyDialog(selectedJavierWeekKey); }
+function copyJavierWeekForward(){ openJavierCopyDialog(selectedJavierWeekKey, true); }
 
 // ---- v3.0: copiar cualquier semana (también las pasadas) a otra semana ----
 // Prioridades: solo las NO terminadas. Riesgos / Necesito / Avances: todos.
@@ -3463,35 +3463,63 @@ let javierCopySourceKey = null;
 function javierBucketHasContent(b){
   return !!(b && ((b.prioridades && b.prioridades.length) || (b.riesgos && b.riesgos.length) || (b.necesito && b.necesito.length) || (b.avances && b.avances.length)));
 }
-function openJavierCopyDialog(sourceKey){
-  javierCopySourceKey = sourceKey;
+function javierCopyWeekOptions(){
   const curKey = weekKey(new Date());
-  const keys = [];
-  let d = new Date((sourceKey < curKey ? curKey : getNextJavierWeekKey(sourceKey)) + 'T00:00:00');
-  for (let i = 0; i < 10; i++){ const k = weekKey(d); if (k !== sourceKey) keys.push(k); d.setDate(d.getDate() + 7); }
-  const def = keys[0];
-  const src = data.javierWeekly[sourceKey] || {};
-  const pend = (src.prioridades || []).filter(p => !p.hecho).length;
-  const rows = ['riesgos','necesito','avances'].reduce((n, k) => n + (src[k] || []).length, 0);
-  pjShow(`Copiar ${formatJavierWeekTabLabel(sourceKey)}`, `
-    <div class="field"><label>Copiar a</label>
-      <select id="jcDest" onchange="updateJavierCopyHint()">${keys.map(k => `<option value="${k}">${formatJavierWeekTabLabel(k)} · ${javierWeekRange(k)}${k === curKey ? ' (en curso)' : ''}</option>`).join('')}</select></div>
-    <p class="pj-note">Se copian <b>${pend}</b> ${pend === 1 ? 'prioridad pendiente' : 'prioridades pendientes'} (las terminadas no pasan) y <b>${rows}</b> ${rows === 1 ? 'fila' : 'filas'} de Riesgos, Necesito y Avances.</p>
+  const set = new Set(Object.keys(data.javierWeekly || {}).filter(k => javierBucketHasContent(data.javierWeekly[k])));
+  let d = new Date(curKey + 'T00:00:00');
+  for (let i = 0; i < 10; i++){ set.add(weekKey(d)); d.setDate(d.getDate() + 7); }
+  return [...set].sort();
+}
+function javierWeekOptLabel(k){
+  const curKey = weekKey(new Date());
+  return `${formatJavierWeekTabLabel(k)} · ${javierWeekRange(k)}${k === curKey ? ' (en curso)' : (k < curKey ? ' (anterior)' : '')}`;
+}
+function openJavierCopyDialog(sourceKey, fromTopButton){
+  const curKey = weekKey(new Date());
+  const withData = Object.keys(data.javierWeekly || {}).filter(k => javierBucketHasContent(data.javierWeekly[k])).sort();
+  let src = sourceKey, dst;
+  // Desde el botón de arriba en la semana en curso: lo habitual es traer la semana anterior a esta.
+  if (fromTopButton && sourceKey === curKey){
+    const prev = withData.filter(k => k < curKey).pop();
+    if (prev){ src = prev; dst = curKey; }
+  }
+  if (!dst) dst = src < curKey ? curKey : getNextJavierWeekKey(src);
+  const opts = javierCopyWeekOptions();
+  if (!opts.includes(src)) opts.push(src);
+  if (!opts.includes(dst)) opts.push(dst);
+  opts.sort();
+  const optHtml = opts.map(k => `<option value="${k}">${javierWeekOptLabel(k)}</option>`).join('');
+  pjShow('Copiar semana', `
+    <div class="field"><label>Copiar desde</label><select id="jcSrc" onchange="updateJavierCopyHint()">${optHtml}</select></div>
+    <div class="field"><label>Copiar a</label><select id="jcDest" onchange="updateJavierCopyHint()">${optHtml}</select></div>
+    <p class="pj-note" id="jcInfo"></p>
     <div id="jcModeWrap" class="field" style="display:none;"><label>La semana destino ya tiene contenido</label>
       <label style="display:flex;gap:8px;align-items:center;font-weight:400;color:var(--text-primary);margin:4px 0;"><input type="radio" style="width:auto;margin:0;flex-shrink:0;" name="jcMode" value="merge" checked> Agregar a lo que ya tiene (sin duplicar)</label>
       <label style="display:flex;gap:8px;align-items:center;font-weight:400;color:var(--text-primary);"><input type="radio" style="width:auto;margin:0;flex-shrink:0;" name="jcMode" value="replace"> Reemplazar todo</label>
     </div>
-    <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('publishJavierModal')">Cancelar</button><button class="btn-add" onclick="doJavierCopy()">Copiar</button></div>`);
-  document.getElementById('jcDest').value = def;
+    <div class="modal-actions"><button class="btn-secondary" onclick="closeModal('publishJavierModal')">Cancelar</button><button class="btn-add" id="jcGo" onclick="doJavierCopy()">Copiar</button></div>`);
+  document.getElementById('jcSrc').value = src;
+  document.getElementById('jcDest').value = dst;
   updateJavierCopyHint();
 }
 function updateJavierCopyHint(){
+  const s = document.getElementById('jcSrc').value;
   const k = document.getElementById('jcDest').value;
-  document.getElementById('jcModeWrap').style.display = javierBucketHasContent(data.javierWeekly[k]) ? '' : 'none';
+  javierCopySourceKey = s;
+  const src = data.javierWeekly[s] || {};
+  const pend = (src.prioridades || []).filter(p => !p.hecho).length;
+  const rows = ['riesgos','necesito','avances'].reduce((n, x) => n + (src[x] || []).length, 0);
+  const same = s === k;
+  document.getElementById('jcInfo').innerHTML = same
+    ? '<span class="pj-err">Elegí una semana de destino distinta a la de origen.</span>'
+    : `Se copian <b>${pend}</b> ${pend === 1 ? 'prioridad pendiente' : 'prioridades pendientes'} (las terminadas no pasan) y <b>${rows}</b> ${rows === 1 ? 'fila' : 'filas'} de Riesgos, Necesito y Avances.`;
+  document.getElementById('jcGo').disabled = same;
+  document.getElementById('jcModeWrap').style.display = !same && javierBucketHasContent(data.javierWeekly[k]) ? '' : 'none';
 }
 function doJavierCopy(){
-  const sourceKey = javierCopySourceKey;
+  const sourceKey = document.getElementById('jcSrc').value;
   const dest = document.getElementById('jcDest').value;
+  if (sourceKey === dest) return;
   const modeEl = document.querySelector('input[name="jcMode"]:checked');
   const replace = javierBucketHasContent(data.javierWeekly[dest]) && modeEl && modeEl.value === 'replace';
   const src = data.javierWeekly[sourceKey] || {};
