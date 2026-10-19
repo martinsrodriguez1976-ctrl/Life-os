@@ -4976,7 +4976,6 @@ function agRow(kind, it, i, opts){
         <button class="icon-btn" onclick="${delFn}" title="Eliminar">✕</button>
       </div>
       <textarea class="weekly-estado-input" rows="1" placeholder="Tareas concretas..." oninput="autoGrowTextarea(this)" onchange="updateAgendaField('${k}','${id}','description', this.value)">${escapeHtml(it.description || '')}</textarea>
-      <div class="ag-ent"><span>Entregable:</span><input type="text" placeholder="—" value="${escapeAttr(it.entregable || '')}" onchange="updateAgendaField('${k}','${id}','entregable', this.value)"></div>
       <div class="ag-foot">
         ${dateCtl}
         ${k === 'p' ? '' : `<label class="prio-owner ${it.responsable ? '' : 'empty'}" title="Responsable"><input type="text" list="agOwnerList" placeholder="Asignar a…" value="${escapeAttr(it.responsable || '')}" oninput="this.parentNode.classList.toggle('empty', !this.value)" onchange="updateAgendaField('${k}','${id}','responsable', this.value)"></label>`}
