@@ -153,6 +153,23 @@ function render(data){
     html += '</div>';
   });
 
+  html += '<div class="card"><h2>Proyectos</h2>';
+  if (data.proyectos && data.proyectos.length){
+    var py = data.proyectos.map(function(p, i){ p.__i = i; return p; }).sort(function(a, b){
+      var fa = a.fecha || '9999-12-31', fb = b.fecha || '9999-12-31';
+      return fa < fb ? -1 : fa > fb ? 1 : a.__i - b.__i;
+    });
+    html += '<div class="ptable-wrap"><table class="ptable"><thead><tr><th>#</th><th>Proyecto</th><th>Tareas concretas</th><th>Entregable</th><th>Horizonte</th></tr></thead><tbody>';
+    py.forEach(function(p, i){
+      var nl = function(t){ return esc(t).replace(/\n/g,'<br>'); };
+      html += '<tr class="' + (p.hecho?'done':'') + '"><td class="n">' + (i+1) + '</td><td class="t">' + esc(p.texto||'(sin nombre)') + (p.hecho?' <span class="hecho">Terminado</span>':'') + '</td><td>' + nl(p.tarea) + '</td><td>' + nl(p.entregable) + '</td><td class="f">' + esc(fmtDay(p.fecha)) + (p.responsable ? '<div><span class="powner">' + esc(p.responsable) + '</span></div>' : '') + '<div><span class="psem ' + (p.semaforo||'verde') + '">' + ({verde:'OK',amarillo:'Atención',rojo:'Crítico'}[p.semaforo||'verde']) + '</span></div></td></tr>';
+    });
+    html += '</tbody></table></div>';
+  } else {
+    html += '<p class="empty">Sin proyectos cargados.</p>';
+  }
+  html += '</div>';
+
   el.className = '';
   el.innerHTML = html;
 }

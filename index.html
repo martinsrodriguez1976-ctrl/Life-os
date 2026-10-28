@@ -669,6 +669,7 @@
   #javierWeekTabs button.subnav-history-toggle{border:1px dashed var(--border);border-radius:999px;}
   .wk-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start;}
   .wk-grid > .wk-card:first-child{grid-column:1 / -1;}
+  .wk-grid > .wk-card.wk-full{grid-column:1 / -1;}
   @media (max-width:1000px){ .wk-grid{grid-template-columns:minmax(0,1fr);} }
   .wk-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:16px 18px;}
   .wk-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
@@ -1129,7 +1130,7 @@
           <div class="page-sub" id="javierWeekSummary"></div>
         </div>
         <div class="page-actions" id="javierPageActions">
-          <button class="btn-secondary" onclick="copyJavierWeekForward()" title="Copia esta semana a otra: prioridades pendientes + riesgos, necesito y avances">⇄ Copiar semana</button>
+          <button class="btn-secondary" onclick="copyJavierWeekForward()" title="Copia esta semana a otra: prioridades y proyectos pendientes + riesgos, necesito y avances">⇄ Copiar semana</button>
           <button class="btn-secondary" onclick="copyJavierWeekRich()" title="Copia el resumen de la semana con el mismo formato de la pantalla, listo para pegar en mail, Teams, OneNote, etc.">⧉ Copiar resumen</button>
           <button class="btn-add" onclick="publishJavierSnapshot()" title="Publica el resumen de esta semana en el link de solo lectura para Javier">↗ Publicar para Javier</button>
         </div>
@@ -1625,7 +1626,7 @@ if (data.javierPriorities.length && !data.javierPrioritiesMigrated){
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
 }
 // Cualquier semana que ya existiera de antes (Riesgos/Necesito/Avances) también necesita su lista de prioridades.
-Object.values(data.javierWeekly).forEach(b => { if (!b.prioridades) b.prioridades = []; });
+Object.values(data.javierWeekly).forEach(b => { if (!b.prioridades) b.prioridades = []; if (!b.proyectos) b.proyectos = []; });
 if (!data.personalTasks) data.personalTasks = [];
 if (!data.lifeAreas) data.lifeAreas = DEFAULT_LIFE_AREAS();
 if (!data.lifeAreaNotes) data.lifeAreaNotes = DEFAULT_LIFE_AREA_NOTES();
@@ -3231,7 +3232,7 @@ function getPastJavierWeekKeysWithData(){
     .filter(k => {
       const b = data.javierWeekly[k];
       return (b.prioridades && b.prioridades.length) || (b.riesgos && b.riesgos.length) ||
-             (b.necesito && b.necesito.length) || (b.avances && b.avances.length);
+             (b.necesito && b.necesito.length) || (b.avances && b.avances.length) || (b.proyectos && b.proyectos.length);
     })
     .sort((a, b) => b.localeCompare(a));
 }
@@ -3414,6 +3415,7 @@ function ensureJavierWeekBucket(key){
     data.javierWeekly[key] = buildJavierWeekBucketFromPrevious(key);
   }
   if (!data.javierWeekly[key].prioridades) data.javierWeekly[key].prioridades = [];
+  if (!data.javierWeekly[key].proyectos) data.javierWeekly[key].proyectos = [];
   return data.javierWeekly[key];
 }
 // Al crear una semana nueva, hereda solo lo que quedó pendiente de la semana anterior con datos
@@ -3421,7 +3423,7 @@ function ensureJavierWeekBucket(key){
 // Lo ya resuelto no se copia. Las filas heredadas son copias con id nuevo: quedan 100% editables
 // en la semana nueva y no tocan el historial de la semana de origen.
 function buildJavierWeekBucketFromPrevious(key){
-  const empty = { prioridades: [], riesgos: [], necesito: [], avances: [] };
+  const empty = { prioridades: [], riesgos: [], necesito: [], avances: [], proyectos: [] };
   const priorKeys = Object.keys(data.javierWeekly).filter(k => k < key).sort();
   const priorKey = priorKeys[priorKeys.length - 1];
   if (!priorKey) return empty;
@@ -3431,7 +3433,8 @@ function buildJavierWeekBucketFromPrevious(key){
     prioridades: (prior.prioridades || []).filter(p => !p.hecho).map(carry),
     riesgos: (prior.riesgos || []).filter(r => r.semaforo !== 'verde').map(carry),
     necesito: (prior.necesito || []).filter(r => r.semaforo !== 'verde').map(carry),
-    avances: (prior.avances || []).filter(r => r.semaforo !== 'verde').map(carry)
+    avances: (prior.avances || []).filter(r => r.semaforo !== 'verde').map(carry),
+    proyectos: (prior.proyectos || []).filter(p => !p.hecho).map(carry)
   };
 }
 
@@ -3461,7 +3464,7 @@ function copyJavierWeekForward(){ openJavierCopyDialog(selectedJavierWeekKey, tr
 // Destino con contenido: "Agregar sin duplicar" (por defecto) o "Reemplazar".
 let javierCopySourceKey = null;
 function javierBucketHasContent(b){
-  return !!(b && ((b.prioridades && b.prioridades.length) || (b.riesgos && b.riesgos.length) || (b.necesito && b.necesito.length) || (b.avances && b.avances.length)));
+  return !!(b && ((b.prioridades && b.prioridades.length) || (b.riesgos && b.riesgos.length) || (b.necesito && b.necesito.length) || (b.avances && b.avances.length) || (b.proyectos && b.proyectos.length)));
 }
 function javierCopyWeekOptions(){
   const curKey = weekKey(new Date());
@@ -3508,11 +3511,12 @@ function updateJavierCopyHint(){
   javierCopySourceKey = s;
   const src = data.javierWeekly[s] || {};
   const pend = (src.prioridades || []).filter(p => !p.hecho).length;
+  const proy = (src.proyectos || []).filter(p => !p.hecho).length;
   const rows = ['riesgos','necesito','avances'].reduce((n, x) => n + (src[x] || []).length, 0);
   const same = s === k;
   document.getElementById('jcInfo').innerHTML = same
     ? '<span class="pj-err">Elegí una semana de destino distinta a la de origen.</span>'
-    : `Se copian <b>${pend}</b> ${pend === 1 ? 'prioridad pendiente' : 'prioridades pendientes'} (las terminadas no pasan) y <b>${rows}</b> ${rows === 1 ? 'fila' : 'filas'} de Riesgos, Necesito y Avances.`;
+    : `Se copian <b>${pend}</b> ${pend === 1 ? 'prioridad pendiente' : 'prioridades pendientes'}, <b>${proy}</b> ${proy === 1 ? 'proyecto en curso' : 'proyectos en curso'} (lo terminado no pasa) y <b>${rows}</b> ${rows === 1 ? 'fila' : 'filas'} de Riesgos, Necesito y Avances.`;
   document.getElementById('jcGo').disabled = same;
   document.getElementById('jcModeWrap').style.display = !same && javierBucketHasContent(data.javierWeekly[k]) ? '' : 'none';
 }
@@ -3525,8 +3529,8 @@ function doJavierCopy(){
   const src = data.javierWeekly[sourceKey] || {};
   const carry = (r) => ({ ...r, id: cid() });
   const norm = (t) => String(t || '').trim().toLowerCase();
-  const target = replace ? { prioridades: [], riesgos: [], necesito: [], avances: [] } : ensureJavierWeekBucket(dest);
-  ['prioridades','riesgos','necesito','avances'].forEach(k => { if (!target[k]) target[k] = []; });
+  const target = replace ? { prioridades: [], riesgos: [], necesito: [], avances: [], proyectos: [] } : ensureJavierWeekBucket(dest);
+  ['prioridades','riesgos','necesito','avances','proyectos'].forEach(k => { if (!target[k]) target[k] = []; });
   let added = 0;
   const addRows = (k, rows, keyField) => {
     const seen = new Set(target[k].map(r => norm(r[keyField])));
@@ -3538,7 +3542,9 @@ function doJavierCopy(){
   };
   addRows('prioridades', (src.prioridades || []).filter(p => !p.hecho).map(p => ({ ...p, hecho: false })), 'texto');
   ['riesgos','necesito','avances'].forEach(k => addRows(k, src[k] || [], 'avance'));
+  addRows('proyectos', (src.proyectos || []).filter(p => !p.hecho).map(p => ({ ...p, hecho: false })), 'texto');
   sortPrioridadesByFecha(target.prioridades);
+  sortPrioridadesByFecha(target.proyectos);
   data.javierWeekly[dest] = target;
   save();
   closeModal('publishJavierModal');
@@ -3671,6 +3677,7 @@ function renderJavierWeeklyTabs(){
 function buildJavierSnapshotJson(){
   const bucket = ensureJavierWeekBucket(selectedJavierWeekKey);
   sortPrioridadesByFecha(bucket.prioridades);
+  sortPrioridadesByFecha(bucket.proyectos);
   const payload = {
     weekKey: selectedJavierWeekKey,
     weekLabel: formatJavierWeekTabLabel(selectedJavierWeekKey),
@@ -3678,7 +3685,8 @@ function buildJavierSnapshotJson(){
     prioridades: bucket.prioridades,
     riesgos: bucket.riesgos,
     necesito: bucket.necesito,
-    avances: bucket.avances
+    avances: bucket.avances,
+    proyectos: bucket.proyectos
   };
   return { json: JSON.stringify(payload, null, 2), label: payload.weekLabel };
 }
@@ -3839,7 +3847,8 @@ function renderJavierWeeklyTables(){
   const el = document.getElementById('javierWeekTables');
   if (!el) return;
   el.innerHTML = '<div class="wk-grid">' + renderJavierWeeklyPrioridadesCard() +
-    JAVIER_WEEKLY_SECTIONS.map(s => renderJavierWeeklySectionTable(s.key, s.label)).join('') + '</div>';
+    JAVIER_WEEKLY_SECTIONS.map(s => renderJavierWeeklySectionTable(s.key, s.label)).join('') +
+    renderJavierProyectosCard() + '</div>';
   renderJavierWeekSummary();
   el.querySelectorAll('textarea.weekly-estado-input, .prio-grid textarea').forEach(autoGrowTextarea);
 }
@@ -4077,6 +4086,20 @@ function copyJavierWeekRich(){
     }
     text += `\n`;
   });
+  sortPrioridadesByFecha(bucket.proyectos);
+  text += `PROYECTOS\n`;
+  if (bucket.proyectos.length){
+    bucket.proyectos.forEach((p, i) => {
+      text += `${i + 1}. ${p.hecho ? '[Terminado] ' : ''}${p.texto || '(sin nombre)'}\n`;
+      if (p.tarea && p.tarea.trim()) text += `   Tareas: ${p.tarea.replace(/\n/g, '\n   ')}\n`;
+      if (p.entregable && p.entregable.trim()) text += `   Entregable: ${p.entregable.replace(/\n/g, '\n   ')}\n`;
+      if (p.fecha) text += `   Horizonte: ${fmtPrioFecha(p.fecha)}\n`;
+      if (p.responsable) text += `   Responsable: ${p.responsable}\n`;
+      text += `   Estado: ${semaforoTxt[p.semaforo || 'verde']} ${WK_SEM_LABEL[p.semaforo || 'verde']}\n`;
+    });
+  } else {
+    text += `(sin proyectos cargados)\n`;
+  }
 
   let html = `<div style="font-family:Calibri,Arial,sans-serif;font-size:14px;color:#222;">`;
   html += `<h2 style="font-family:Poppins,Arial,sans-serif;font-size:18px;margin:0 0 12px;">Reunión con Javier — ${esc(weekLbl)}</h2>`;
@@ -4121,6 +4144,20 @@ function copyJavierWeekRich(){
       html += `<p style="color:#888;margin:0;">(sin datos)</p>`;
     }
   });
+  html += `<h3 style="font-size:13px;letter-spacing:.3px;margin:18px 0 6px;">PROYECTOS</h3>`;
+  if (bucket.proyectos.length){
+    const th = 'style="text-align:left;padding:6px 8px;border:1px solid #DCE2E7;background:#EEF1F4;font-size:13px;"';
+    const td = (done) => `style="padding:6px 8px;border:1px solid #DCE2E7;vertical-align:top;font-size:13px;${done ? 'text-decoration:line-through;color:#888;' : ''}"`;
+    const nl = (t) => esc(t || '').replace(/\n/g, '<br>');
+    html += `<table style="border-collapse:collapse;width:100%;margin:0;"><tr><th ${th}>#</th><th ${th}>Proyecto</th><th ${th}>Tareas concretas</th><th ${th}>Entregable</th><th ${th}>Horizonte</th></tr>`;
+    bucket.proyectos.forEach((p, i) => {
+      const d = p.hecho;
+      html += `<tr><td ${td(d)}>${i + 1}</td><td ${td(d)}><b>${esc(p.texto || '(sin nombre)')}</b>${d ? ' <i>(terminado)</i>' : ''}</td><td ${td(d)}>${nl(p.tarea)}</td><td ${td(d)}>${nl(p.entregable)}</td><td ${td(d)}>${p.fecha ? esc(fmtPrioFecha(p.fecha)) : ''}${p.responsable ? `<br><span style="display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;background:#E2E9EE;color:#3D5A73;">${esc(p.responsable)}</span>` : ''}<br><span style="display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;${PRIO_SEM_STYLE[p.semaforo || 'verde']}">${WK_SEM_LABEL[p.semaforo || 'verde']}</span></td></tr>`;
+    });
+    html += `</table>`;
+  } else {
+    html += `<p style="color:#888;margin:0;">(sin proyectos cargados)</p>`;
+  }
   html += `</div>`;
 
   const finish = (msg) => showToast(msg);
@@ -5120,6 +5157,7 @@ function javierWeekRange(key){
 function javierHistText(b){
   const parts = [];
   (b.prioridades || []).forEach(p => parts.push(p.texto, p.tarea, p.entregable, p.responsable));
+  (b.proyectos || []).forEach(p => parts.push(p.texto, p.tarea, p.entregable, p.responsable));
   JAVIER_WEEKLY_SECTIONS.forEach(sec => (b[sec.key] || []).forEach(r => parts.push(r.avance, r.estado)));
   return parts.filter(Boolean).join(' ').toLowerCase();
 }
@@ -5194,6 +5232,12 @@ function renderJavierHistoryList(){
     if (riesgos) chips.push(`<span class="hist-chip">${riesgos} ${riesgos === 1 ? 'riesgo' : 'riesgos'}</span>`);
     if (necesito) chips.push(`<span class="hist-chip">${necesito} pedido${necesito === 1 ? '' : 's'}</span>`);
     if (avances) chips.push(`<span class="hist-chip">${avances} ${avances === 1 ? 'avance' : 'avances'}</span>`);
+    const py = sortPrioridadesByFecha((b.proyectos || []).slice());
+    if (py.length) chips.push(`<span class="hist-chip">${py.length} ${py.length === 1 ? 'proyecto' : 'proyectos'}</span>`);
+    const proyHtml = py.length ? `
+      <table class="hist-table"><thead><tr><th>#</th><th>Proyecto</th><th>Tareas concretas</th><th>Entregable</th><th>Horizonte</th></tr></thead><tbody>
+      ${py.map((p, i) => `<tr class="${p.hecho ? 'done' : ''}"><td class="n">${i + 1}</td><td class="t">${hlText(p.texto || '(sin nombre)')}</td><td data-l="Tareas">${hlText(p.tarea)}</td><td data-l="Entregable">${hlText(p.entregable)}</td><td class="f" data-l="Horizonte">${p.fecha ? escapeHtml(fmtPrioFecha(p.fecha)) : ''}${p.responsable ? `<div><span class="owner-chip">${hlText(p.responsable)}</span></div>` : ''}<div><span class="sem-pill ${p.semaforo || 'verde'}" style="margin-top:4px">${WK_SEM_LABEL[p.semaforo || 'verde']}</span></div></td></tr>`).join('')}
+      </tbody></table>` : '';
     const open = q ? true : !!javierHistOpen[key];
 
     const prioHtml = pr.length ? `
@@ -5224,6 +5268,7 @@ function renderJavierHistoryList(){
         <div class="hist-sec-title">Prioridades para la reunión</div>
         ${prioHtml}
         <div class="hist-cols">${secHtml}</div>
+        ${proyHtml ? `<div class="hist-sec-title" style="margin-top:16px">Proyectos</div>${proyHtml}` : ''}
         <div class="hist-foot" style="gap:8px;"><button class="btn-secondary" onclick="openJavierCopyDialog('${key}')">→ Copiar a otra semana</button><button class="btn-secondary" onclick="openJavierWeekForEdit('${key}')">✎ Abrir para editar</button></div>
       </div>
     </div>`;
@@ -5279,8 +5324,76 @@ function renderJavierWeekSummary(){
   const criticos = ['riesgos','necesito','avances'].reduce((n, k) => n + (b[k] || []).filter(r => r.semaforo === 'rojo').length, 0);
   let txt = `${formatJavierWeekTabLabel(selectedJavierWeekKey)} · ${f(start)} al ${f(end)}`;
   if (pr.length) txt += ` · ${pr.filter(p => p.hecho).length} de ${pr.length} prioridades hechas`;
+  const pyc = (b.proyectos || []).filter(p => !p.hecho).length;
+  if (pyc) txt += ` · ${pyc} ${pyc === 1 ? 'proyecto en curso' : 'proyectos en curso'}`;
   if (criticos) txt += ` · ${criticos} ${criticos === 1 ? 'tema crítico' : 'temas críticos'}`;
   el.textContent = txt;
+}
+
+// ---- v3.1: Proyectos (debajo de Riesgos / Necesito / Avances), mismo formato que Prioridades ----
+// Se guardan por semana en data.javierWeekly[semana].proyectos. Al pasar de semana (o copiar)
+// se arrastran los que no están terminados.
+function jpyBucket(){ return ensureJavierWeekBucket(selectedJavierWeekKey); }
+function jpyFind(id){ return jpyBucket().proyectos.find(x => x.id === id); }
+function addJavierProyecto(){
+  jpyBucket().proyectos.push({ id: cid(), texto: '', tarea: '', entregable: '', fecha: '', responsable: '', semaforo: 'verde', hecho: false });
+  save(); renderJavierWeeklyTables();
+  const last = document.querySelector('#javierWeekTables .wk-proy .prio-grid:last-child .prio-tema');
+  if (last) last.focus();
+}
+function deleteJavierProyecto(id){
+  const b = jpyBucket();
+  b.proyectos = b.proyectos.filter(p => p.id !== id);
+  save(); renderJavierWeeklyTables();
+}
+function toggleJavierProyectoDone(id){
+  const p = jpyFind(id); if (p) p.hecho = !p.hecho;
+  save(); renderJavierWeeklyTables();
+}
+function cycleJavierProyectoSemaforo(id){
+  const order = ['verde', 'amarillo', 'rojo'];
+  const p = jpyFind(id); if (!p) return;
+  p.semaforo = order[(order.indexOf(p.semaforo || 'verde') + 1) % order.length];
+  save(); renderJavierWeeklyTables();
+}
+function updateJavierProyectoField(id, field, val){
+  if (!['texto','tarea','entregable','fecha','responsable'].includes(field)) return;
+  const p = jpyFind(id); if (p) p[field] = val;
+  if (field === 'fecha') sortPrioridadesByFecha(jpyBucket().proyectos);
+  save();
+  if (field === 'fecha') renderJavierWeeklyTables();
+}
+function renderJavierProyectosCard(){
+  const list = sortPrioridadesByFecha(jpyBucket().proyectos);
+  const total = list.length;
+  const rowsHtml = total ? list.map((p, i) => `
+    <div class="priority-row prio-grid ${p.hecho ? 'done' : ''}">
+      <span></span>
+      <span class="priority-rank">${i + 1}</span>
+      <div class="task-check ${p.hecho ? 'done' : ''}" onclick="toggleJavierProyectoDone('${p.id}')" title="Marcar como terminado">${p.hecho ? '✓' : ''}</div>
+      <div class="prio-cell prio-c-tema"><textarea rows="1" class="prio-tema" placeholder="Proyecto..." oninput="autoGrowTextarea(this)" onchange="updateJavierProyectoField('${p.id}','texto', this.value)">${escapeHtml(p.texto || '')}</textarea></div>
+      <div class="prio-cell"><div class="prio-lbl">Tareas concretas</div><textarea rows="1" placeholder="Tareas concretas..." oninput="autoGrowTextarea(this)" onchange="updateJavierProyectoField('${p.id}','tarea', this.value)">${escapeHtml(p.tarea || '')}</textarea></div>
+      <div class="prio-cell"><div class="prio-lbl">Entregable</div><textarea rows="1" placeholder="Entregable..." oninput="autoGrowTextarea(this)" onchange="updateJavierProyectoField('${p.id}','entregable', this.value)">${escapeHtml(p.entregable || '')}</textarea></div>
+      <div class="prio-cell prio-c-fecha"><div class="prio-lbl">Horizonte</div><input type="date" value="${escapeAttr(p.fecha || '')}" onchange="updateJavierProyectoField('${p.id}','fecha', this.value)">
+        <label class="prio-owner ${p.responsable ? '' : 'empty'}" title="Responsable"><input type="text" list="prioOwnerList" placeholder="Asignar a…" value="${escapeAttr(p.responsable || '')}" oninput="this.parentNode.classList.toggle('empty', !this.value)" onchange="updateJavierProyectoField('${p.id}','responsable', this.value.trim())"></label>
+        <button class="sem-pill ${p.semaforo || 'verde'}" onclick="cycleJavierProyectoSemaforo('${p.id}')" title="Click para cambiar el semáforo">${WK_SEM_LABEL[p.semaforo || 'verde']}</button></div>
+      <div class="priority-actions">
+        <button class="icon-btn" onclick="deleteJavierProyecto('${p.id}')" title="Eliminar">✕</button>
+      </div>
+    </div>
+  `).join('') : `<div class="empty-state">Todavía no cargaste proyectos para esta semana.</div>`;
+  return `
+    <div class="wk-card wk-full wk-proy">
+      <div class="wk-card-head">
+        <h4 class="wk-card-title">Proyectos${total ? `<span class="wk-count">${list.filter(p => p.hecho).length}/${total}</span>` : ''}</h4>
+        <button class="btn-ghost" onclick="addJavierProyecto()">+ Agregar</button>
+      </div>
+      <div class="priority-list prio-table">
+        ${total ? '<div class="prio-head"><span>#</span><span>Proyecto</span><span>Tareas concretas</span><span>Entregable</span><span>Horizonte ↑</span><span></span></div>' : ''}
+        ${rowsHtml}
+      </div>
+    </div>
+  `;
 }
 
 // ---- Init ----
