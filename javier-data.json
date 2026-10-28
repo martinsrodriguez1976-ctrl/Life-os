@@ -1,29 +1,59 @@
 {
-  "weekKey": "2026-10-19",
-  "weekLabel": "Semana 43",
-  "publishedAt": "2026-10-21T10:53:39.544Z",
+  "weekKey": "2026-10-26",
+  "weekLabel": "Semana 44",
+  "publishedAt": "2026-10-28T12:16:46.594Z",
   "prioridades": [
     {
-      "id": "id_vxbu66bh",
+      "id": "id_48a5pzmq",
+      "texto": "Qué problemas habría si se desaloja el Depósito 3 en 60 días (Germán)",
+      "tarea": "Inventariar lo que hay en el D3 (1.864 posiciones: ocupación, SKUs, rotación, lo que no entra en el Cubo). Definir el destino de cada grupo de stock y la capacidad disponible en el Cubo. Ver el impacto en picking y exportación, en buffer de despacho de días pico, en personal y equipos, en habilitaciones SENASA y en contratos. Armar el cronograma inverso a 60 días con los hitos que tienen que cumplirse.",
+      "entregable": "Análisis de desalojo del D3: lista de condiciones necesarias, riesgos con probabilidad e impacto, cronograma de 60 días y costo de la transición",
+      "fecha": "2026-10-26",
+      "responsable": "",
+      "semaforo": "amarillo",
+      "hecho": true
+    },
+    {
+      "id": "id_4ezefvlp",
+      "texto": "Validar si el picking por camada cambia el tamaño del depósito (Santiago)",
+      "tarea": "Cuantificar qué parte del volumen se puede despachar por camada completa, a partir de pedidos reales de Qlik. Recalcular posiciones de picking, frentes y m² con y sin camada. Evaluar si se necesita equipo específico (pinza de camadas, robot) y qué costo tiene.",
+      "entregable": "Comparación de escenarios de dimensionamiento con y sin picking por camada: m², posiciones, equipos,",
+      "fecha": "2026-10-26",
+      "responsable": "",
+      "semaforo": "amarillo",
+      "hecho": false
+    },
+    {
+      "id": "id_xt210lxu",
+      "texto": "Tercerizar el picking hasta que se decida (Santiago)",
+      "tarea": "elevar qué se pickea hoy: SKUs, pedidos por día, unidades y clientes, incluidas las 7 corridas de exportación. Pedir cotización a 2 o 3 operadores, o ampliar el alcance de uno actual. Definir el flujo físico Cubo → operador → cliente y su costo incremental (fletes cortos, manipuleo). Medir el impacto en OTIF y lead time, y fijar fecha de corte.",
+      "entregable": "Propuesta de picking tercerizado transitorio: operador, costo mensual, flujo, riesgos y fecha de arranque",
+      "fecha": "2026-10-26",
+      "responsable": "",
+      "semaforo": "amarillo",
+      "hecho": true
+    },
+    {
+      "id": "id_95ql8uy9",
+      "texto": "Informe GB",
+      "tarea": "Consolidar las alternativas trabajadas con los consultores, ahora con plantas fijas. Comparar cada combinación por costo logístico total, nivel de servicio, inversión y riesgo. Llegar con una recomendación concreta, no solo con un menú de opciones.",
+      "entregable": "Informe ejecutivo para GB con la decisión recomendada",
+      "fecha": "2026-10-28",
+      "hecho": false,
+      "semaforo": "verde"
+    },
+    {
+      "id": "id_s784o9x9",
       "texto": "Panes nuevas lineas",
       "tarea": "Asignar las posiciones de guardado y definir la ubicación de picking. Confirmar el alta de los artículos en RSOFT y su asignación en ASA. Estimar el volumen semanal esperado para dimensionar los recursos.",
       "entregable": "Layout y procedimiento operativo listos",
-      "fecha": "2026-10-15",
+      "fecha": "2026-10-28",
       "hecho": false,
       "semaforo": "amarillo",
       "responsable": "Pedro Villasusso"
     },
     {
-      "id": "id_lszvl1im",
-      "texto": "Informe GB",
-      "tarea": "Consolidar las alternativas trabajadas con los consultores, ahora con plantas fijas. Comparar cada combinación por costo logístico total, nivel de servicio, inversión y riesgo. Llegar con una recomendación concreta, no solo con un menú de opciones.",
-      "entregable": "Informe ejecutivo para GB con la decisión recomendada",
-      "fecha": "2026-10-21",
-      "hecho": false,
-      "semaforo": "verde"
-    },
-    {
-      "id": "id_3izr37f3",
+      "id": "id_1djny7uu",
       "texto": "Segmentación clientes",
       "tarea": "Avanzar con la actualizacion de las bases para poder iniciar el proceso de segmentacion",
       "entregable": "App para segmentacion",
@@ -33,108 +63,79 @@
       "hecho": false
     },
     {
-      "id": "id_3tfzh716",
+      "id": "id_km8hv7pt",
       "texto": "Nodos de Abastecimiento",
       "tarea": "Precisar con Daniel el concepto exacto y cómo lo nombra. Definir qué depósitos funcionan como nodo y con qué reglas: qué abastece cada uno, con qué frecuencia y con qué stock objetivo. Armar el plan de implementación con un piloto.",
       "entregable": "Definición del modelo, piloto y cronograma",
       "fecha": "2026-12-01",
       "hecho": false,
       "semaforo": "verde"
+    },
+    {
+      "id": "id_wbrmpzjg",
+      "texto": "Revisar la propuesta de Maya con un tercero antes de aprobarla (Germán)",
+      "tarea": "Elegir un revisor independiente: otra consultora o un especialista en diseño de depósitos. Pasarle la cotización y el alcance. Confirmar que el alcance incluya picking por camada, programación y días de stock. Comparar honorarios, plazo y metodología.",
+      "entregable": "Informe de segunda opinión sobre Maya, con un “go / ajustar alcance / no go” y una contrapropuesta de alcance si corresponde",
+      "fecha": "",
+      "responsable": "",
+      "semaforo": "rojo",
+      "hecho": false
     }
   ],
   "riesgos": [
     {
-      "id": "id_w4ebal3f",
-      "semaforo": "rojo",
-      "avance": "Produccion VM",
-      "estado": "• Ver espacios",
-      "adjuntos": [
-        {
-          "id": "id_kjv47esm",
-          "nombre": "Ocupacion_Depositos_2026-10-20.xlsx",
-          "tipo": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          "dataUrl": "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,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",
-          "tamano": 11814,
-          "esImagen": false
-        }
-      ]
-    },
-    {
-      "id": "id_651f5hyj",
-      "semaforo": "rojo",
-      "avance": "Accidente Balbo ",
-      "estado": "• Fractura expuesta de dedo. Se resbalo del camion."
+      "id": "id_n4wzkh26",
+      "semaforo": "verde",
+      "avance": "Segunda opinion Cubo",
+      "estado": "• Do Better: Contactados. Envían brochure y comienzan las reuniones y traspaso de datos.\n• SSI-Schaefer: Envía archivos para comenzar a recabar de datos. \n• Dipacua: Queda fuera por costo?"
     }
   ],
   "necesito": [
     {
-      "id": "id_sgjlwcog",
-      "semaforo": "rojo",
-      "avance": "Ver tema SB",
-      "estado": "• Aceiteros en IFLOW: Respondemos o desactivamos la posibilidad?"
+      "id": "id_nvsxfqmd",
+      "semaforo": "verde",
+      "avance": "Sistema aviso clientes",
+      "estado": "• Configuramos directo a clientes?"
     },
     {
-      "id": "id_8hv3arsq",
+      "id": "id_5ilvag4r",
       "semaforo": "rojo",
       "avance": "RRHH",
-      "estado": "• Propuesta salarial cambio de estructura\n• Compra vacaciones Sabrina (60 días)+21 proximos\n• Propuesta venta de rutas a terceros.\n• Desvinculación pactada con camión."
+      "estado": "• Propuesta solicitar recurso a Administración"
     },
     {
-      "id": "id_z4qdxayt",
+      "id": "id_cqf67x44",
       "semaforo": "amarillo",
-      "avance": "Apis Iflow",
-      "estado": "• 13/10 Envie esquema para armado de apis. "
+      "avance": "Priorizacion de bases",
+      "estado": "• Bases para segmentación de clientes"
     }
   ],
   "avances": [
     {
-      "id": "id_z8lre7zl",
-      "semaforo": "rojo",
+      "id": "id_456nufuo",
+      "semaforo": "amarillo",
       "avance": "Cubo",
-      "estado": "• SSi Schaefer: 21/10 9:45hs Visita a droguería sur. 11Hs en planta RDC para diagnostico cubo\n• 6 carros. Solo 4 nuestros funcionan con muchísimos errores. Caidas de sistema completo 2 veces anoche\n• AGF Informa que los problemas de naveta se deben a interrupciones en el sistema de RDC de WIFI"
+      "estado": "",
+      "adjuntos": []
     },
     {
-      "id": "id_nx1kcjab",
+      "id": "id_7h7q6t54",
       "semaforo": "amarillo",
       "avance": "Sistemas",
-      "estado": "• 19/10: reunión de revision de temas\n• Entorno ASA: Con inconvenientes aun en varios temas. Teoricamente estan resueltos.\n• Cuadro tarifario: 9/10 presentación primer maqueta. Estamos analizandola entre todos. Pero le falta mucho. Esta lejos.\n• Pallets Swap: Llegaron las apis del proveedor. Ahora Sistemas tiene que integrarlas.\n• Seguimiento de clientes: No funciona aun el simov automático?\n"
+      "estado": "• QR: Funciona en cajas Cordoba. No funciona en graneles. En BUE duplica Simovs. \n• Entorno ASA: En HDC y Graneles: No da stocks. En Cajas: varios temas. \n• Cuadro tarifario: SUSPENDIDO hasta resolver otras implementaciones. \n• Pallets Swap: Genere la Api. Me conecto directo a los datos y arme presentación.\n• Seguimiento de clientes:  ¿?\n• Nota de pedido por reposición: ¿?\n• Apis Iflow. \n"
     },
     {
-      "id": "id_a0d4nuyq",
-      "semaforo": "rojo",
-      "avance": "Decomisos en Helios",
-      "estado": "• Resta propuesta comercial.\n• ",
-      "fechaEst": "2026-10-16"
-    },
-    {
-      "id": "id_jqnkd6hd",
+      "id": "id_q3zbosuh",
       "semaforo": "verde",
       "avance": "Cierre AMC",
-      "estado": "•Inventario final.\n• Reclamn pallets adeudados. (Hay algun contrato?)"
+      "estado": "• Sacando los ultimos pallets.\n• Responder mail. "
     },
     {
-      "id": "id_so9715a4",
+      "id": "id_1m3hjue4",
       "semaforo": "verde",
       "avance": "Revision seguros",
       "estado": "• En Curso"
-    },
-    {
-      "id": "id_wn4h8vbd",
-      "semaforo": "verde",
-      "avance": "Nuevo deposito de V. Mercedes",
-      "estado": "• Cotizacion de maya compartida con Rodrigo. \n• Rodrigo quiere contactar a otra consultora. "
-    },
-    {
-      "id": "id_xqhxs99f",
-      "semaforo": "verde",
-      "avance": "Nuevo deposito de Picking",
-      "estado": "• Pedro comenzara a desarmar racks para operar. "
-    },
-    {
-      "id": "id_m982t3bh",
-      "semaforo": "verde",
-      "avance": "",
-      "estado": "• "
     }
-  ]
+  ],
+  "proyectos": []
 }
