@@ -995,6 +995,7 @@
     <button class="active" data-tab="agenda">Agenda</button>
     <button data-tab="colaboradores">Colaboradores</button>
     <button data-tab="reunionjavier">Reunión con Javier</button>
+    <button data-tab="gerentes">Reunión de gerentes</button>
     <button data-tab="indicadores">Indicadores</button>
     <button data-tab="coach">Coach</button>
     <button data-tab="actividades">Actividades</button>
@@ -1143,6 +1144,23 @@
       <div id="javierHistoryView" style="display:none;"></div>
     </div>
 
+  </section>
+
+  <!-- REUNIÓN DE GERENTES -->
+  <section class="panel" id="panel-gerentes">
+    <div class="agenda-section">
+      <div class="page-head">
+        <div>
+          <h2>Reunión de gerentes</h2>
+          <div class="page-sub" id="gerWeekSummary"></div>
+        </div>
+        <div class="page-actions">
+          <button class="btn-secondary" onclick="copyGerentesResumen()" title="Copia los temas de la semana con formato, listo para pegar en mail, Teams u OneNote">⧉ Copiar resumen</button>
+        </div>
+      </div>
+      <nav class="subnav" id="gerWeekTabs" role="tablist"></nav>
+      <div id="gerWeekBody"></div>
+    </div>
   </section>
 
   <!-- INDICADORES -->
@@ -1606,6 +1624,7 @@ if (!data.activity) data.activity = [];
 if (!data.events) data.events = [];
 if (!data.meetingLog) data.meetingLog = [];
 if (!data.javierWeekly) data.javierWeekly = {};
+if (!data.gerentesWeekly) data.gerentesWeekly = {};
 if (!data.javierPriorities) data.javierPriorities = [];
 // Migración: globo de estado (No iniciado / En curso / Finalizado) en tareas y proyectos de Agenda.
 // Las tareas/proyectos que ya existían no tenían este campo: se infiere a partir de "done".
@@ -2100,6 +2119,7 @@ document.querySelectorAll('nav.tabs > button').forEach(btn => {
     if (btn.dataset.tab === 'actividades') renderCalendars();
     if (btn.dataset.tab === 'colaboradores'){ renderCollabSidebar(); renderCollabContent(); }
     if (btn.dataset.tab === 'reunionjavier'){ renderJavierWeekly(); }
+    if (btn.dataset.tab === 'gerentes'){ renderGerentes(); }
     if (btn.dataset.tab === 'indicadores'){ renderIndicadores(); }
     if (btn.dataset.tab === 'vida'){ renderVidaAll(); }
   });
@@ -5394,6 +5414,151 @@ function renderJavierProyectosCard(){
       </div>
     </div>
   `;
+}
+
+// ---- v3.2: Reunión de gerentes (temas a tratar por semana, mismo formato que Prioridades) ----
+// data.gerentesWeekly[lunes ISO] = { temas: [{id,texto,tarea,entregable,fecha,responsable,semaforo,hecho}] }
+// "hecho" = tema tratado. La semana actual hereda sola los temas no tratados de la última semana con datos;
+// las semanas futuras se arman a mano (botón "Traer pendientes") para no congelar copias viejas.
+let gerSelectedKey = null;
+const GER_FIELDS = ['texto','tarea','entregable','fecha','responsable'];
+function gerCurKey(){ return weekKey(new Date()); }
+function gerHasData(b){ return !!(b && b.temas && b.temas.length); }
+function gerPrevKeyWithData(key){
+  const ks = Object.keys(data.gerentesWeekly).filter(k => k < key && gerHasData(data.gerentesWeekly[k])).sort();
+  return ks[ks.length - 1] || null;
+}
+function gerPendingFrom(key){
+  const pk = gerPrevKeyWithData(key);
+  return pk ? (data.gerentesWeekly[pk].temas || []).filter(t => !t.hecho) : [];
+}
+function gerBucket(key, create){
+  if (!data.gerentesWeekly[key] && create){
+    const carry = key === gerCurKey() ? gerPendingFrom(key).map(t => ({ ...t, id: cid() })) : [];
+    data.gerentesWeekly[key] = { temas: carry };
+  }
+  const b = data.gerentesWeekly[key];
+  if (b && !b.temas) b.temas = [];
+  return b;
+}
+function gerWeekKeys(){
+  const cur = gerCurKey();
+  const past = Object.keys(data.gerentesWeekly).filter(k => k < cur && gerHasData(data.gerentesWeekly[k])).sort().slice(-6);
+  const fut = []; let d = new Date(cur + 'T00:00:00');
+  for (let i = 0; i < 5; i++){ fut.push(weekKey(d)); d.setDate(d.getDate() + 7); }
+  return [...past, ...fut];
+}
+function selectGerWeek(k){ gerSelectedKey = k; renderGerentes(); }
+function gerFind(id){ const b = gerBucket(gerSelectedKey, true); return b.temas.find(t => t.id === id); }
+function addGerTema(){
+  gerBucket(gerSelectedKey, true).temas.push({ id: cid(), texto: '', tarea: '', entregable: '', fecha: '', responsable: '', semaforo: 'verde', hecho: false });
+  save(); renderGerentes();
+  const last = document.querySelector('#gerWeekBody .prio-grid:last-child .prio-tema'); if (last) last.focus();
+}
+function deleteGerTema(id){ const b = gerBucket(gerSelectedKey, true); b.temas = b.temas.filter(t => t.id !== id); save(); renderGerentes(); }
+function toggleGerTema(id){ const t = gerFind(id); if (t) t.hecho = !t.hecho; save(); renderGerentes(); }
+function cycleGerSemaforo(id){
+  const order = ['verde','amarillo','rojo']; const t = gerFind(id); if (!t) return;
+  t.semaforo = order[(order.indexOf(t.semaforo || 'verde') + 1) % 3]; save(); renderGerentes();
+}
+function updateGerField(id, field, val){
+  if (!GER_FIELDS.includes(field)) return;
+  const t = gerFind(id); if (t) t[field] = val;
+  if (field === 'fecha') sortPrioridadesByFecha(gerBucket(gerSelectedKey, true).temas);
+  save(); if (field === 'fecha') renderGerentes(); else renderGerSummary();
+}
+function gerTraerPendientes(){
+  const b = gerBucket(gerSelectedKey, true);
+  const norm = x => String(x || '').trim().toLowerCase();
+  const seen = new Set(b.temas.map(t => norm(t.texto)));
+  let n = 0;
+  gerPendingFrom(gerSelectedKey).forEach(t => { if (seen.has(norm(t.texto))) return; seen.add(norm(t.texto)); b.temas.push({ ...t, id: cid() }); n++; });
+  sortPrioridadesByFecha(b.temas); save(); renderGerentes();
+  showToast(n ? `${n} ${n === 1 ? 'tema traído' : 'temas traídos'} de la semana anterior.` : 'No había temas pendientes para traer.');
+}
+function renderGerSummary(){
+  const el = document.getElementById('gerWeekSummary'); if (!el || !gerSelectedKey) return;
+  const b = data.gerentesWeekly[gerSelectedKey];
+  const ts = (b && b.temas) || [];
+  const crit = ts.filter(t => !t.hecho && t.semaforo === 'rojo').length;
+  let txt = `${formatJavierWeekTabLabel(gerSelectedKey)} · ${javierWeekRange(gerSelectedKey)}`;
+  if (ts.length) txt += ` · ${ts.filter(t => t.hecho).length} de ${ts.length} temas tratados`;
+  if (crit) txt += ` · ${crit} ${crit === 1 ? 'crítico' : 'críticos'}`;
+  el.textContent = txt;
+}
+function renderGerentes(){
+  const cur = gerCurKey();
+  if (!gerSelectedKey) gerSelectedKey = cur;
+  const keys = gerWeekKeys();
+  if (!keys.includes(gerSelectedKey)) gerSelectedKey = cur;
+  if (gerSelectedKey === cur) gerBucket(cur, true);
+  const nav = document.getElementById('gerWeekTabs');
+  if (nav){
+    nav.innerHTML = keys.map(k => `<button class="${k === gerSelectedKey ? 'active' : ''} ${k === cur ? 'is-current' : ''}" onclick="selectGerWeek('${k}')"${k === cur ? ' title="Semana actual"' : ''}>${formatJavierWeekTabLabel(k)}</button>`).join('');
+    const act = nav.querySelector('button.active'); if (act) { try { nav.scrollLeft = act.offsetLeft - 8; } catch(e){} }
+  }
+  const b = data.gerentesWeekly[gerSelectedKey];
+  const list = b ? sortPrioridadesByFecha(b.temas) : [];
+  const pend = gerSelectedKey > cur ? gerPendingFrom(gerSelectedKey).length : 0;
+  const rows = list.length ? list.map((t, i) => `
+    <div class="priority-row prio-grid ${t.hecho ? 'done' : ''}">
+      <span></span>
+      <span class="priority-rank">${i + 1}</span>
+      <div class="task-check ${t.hecho ? 'done' : ''}" onclick="toggleGerTema('${t.id}')" title="Marcar como tratado">${t.hecho ? '✓' : ''}</div>
+      <div class="prio-cell prio-c-tema"><textarea rows="1" class="prio-tema" placeholder="Tema..." oninput="autoGrowTextarea(this)" onchange="updateGerField('${t.id}','texto', this.value)">${escapeHtml(t.texto || '')}</textarea></div>
+      <div class="prio-cell"><div class="prio-lbl">Qué planteo / necesito</div><textarea rows="1" placeholder="Qué planteo / necesito..." oninput="autoGrowTextarea(this)" onchange="updateGerField('${t.id}','tarea', this.value)">${escapeHtml(t.tarea || '')}</textarea></div>
+      <div class="prio-cell"><div class="prio-lbl">Entregable / acuerdo</div><textarea rows="1" placeholder="Entregable / acuerdo..." oninput="autoGrowTextarea(this)" onchange="updateGerField('${t.id}','entregable', this.value)">${escapeHtml(t.entregable || '')}</textarea></div>
+      <div class="prio-cell prio-c-fecha"><div class="prio-lbl">Horizonte</div><input type="date" value="${escapeAttr(t.fecha || '')}" onchange="updateGerField('${t.id}','fecha', this.value)">
+        <label class="prio-owner ${t.responsable ? '' : 'empty'}" title="Responsable / área"><input type="text" list="gerOwnerList" placeholder="Responsable…" value="${escapeAttr(t.responsable || '')}" oninput="this.parentNode.classList.toggle('empty', !this.value)" onchange="updateGerField('${t.id}','responsable', this.value.trim())"></label>
+        <button class="sem-pill ${t.semaforo || 'verde'}" onclick="cycleGerSemaforo('${t.id}')" title="Click para cambiar el semáforo">${WK_SEM_LABEL[t.semaforo || 'verde']}</button></div>
+      <div class="priority-actions"><button class="icon-btn" onclick="deleteGerTema('${t.id}')" title="Eliminar">✕</button></div>
+    </div>`).join('') : `<div class="empty-state">Todavía no cargaste temas para esta semana.</div>`;
+  const owners = new Set((data.collaborators || []).map(c => c.name).filter(Boolean));
+  Object.values(data.gerentesWeekly).forEach(w => (w.temas || []).forEach(t => t.responsable && owners.add(t.responsable)));
+  const body = document.getElementById('gerWeekBody');
+  if (!body) return;
+  body.innerHTML = `
+    <div class="wk-card">
+      <div class="wk-card-head">
+        <h4 class="wk-card-title">Temas a tratar${list.length ? `<span class="wk-count">${list.filter(t => t.hecho).length}/${list.length}</span>` : ''}</h4>
+        <span style="display:flex;gap:8px;flex-wrap:wrap;">${pend ? `<button class="btn-ghost" onclick="gerTraerPendientes()" title="Trae los temas no tratados de la última semana con datos">↓ Traer pendientes (${pend})</button>` : ''}<button class="btn-ghost" onclick="addGerTema()">+ Agregar</button></span>
+      </div>
+      <datalist id="gerOwnerList">${[...owners].map(o => `<option value="${escapeAttr(o)}">`).join('')}</datalist>
+      <div class="priority-list prio-table">
+        ${list.length ? '<div class="prio-head"><span>#</span><span>Tema</span><span>Qué planteo / necesito</span><span>Entregable / acuerdo</span><span>Horizonte ↑</span><span></span></div>' : ''}
+        ${rows}
+      </div>
+    </div>`;
+  body.querySelectorAll('.prio-grid textarea').forEach(autoGrowTextarea);
+  renderGerSummary();
+}
+function copyGerentesResumen(){
+  const b = data.gerentesWeekly[gerSelectedKey];
+  const ts = b ? sortPrioridadesByFecha(b.temas.slice()) : [];
+  const lbl = formatJavierWeekTabLabel(gerSelectedKey);
+  const esc = x => String(x || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const nl = x => esc(x).replace(/\n/g, '<br>');
+  let text = `Reunión de gerentes — ${lbl}\n\n`;
+  ts.forEach((t, i) => {
+    text += `${i + 1}. ${t.hecho ? '[Tratado] ' : ''}${t.texto || '(sin tema)'} — ${WK_SEM_LABEL[t.semaforo || 'verde']}\n`;
+    if (t.tarea) text += `   Planteo / necesito: ${t.tarea.replace(/\n/g, '\n   ')}\n`;
+    if (t.entregable) text += `   Entregable / acuerdo: ${t.entregable.replace(/\n/g, '\n   ')}\n`;
+    if (t.fecha) text += `   Horizonte: ${fmtPrioFecha(t.fecha)}\n`;
+    if (t.responsable) text += `   Responsable: ${t.responsable}\n`;
+  });
+  if (!ts.length) text += '(sin temas cargados)\n';
+  const th = 'style="text-align:left;padding:6px 8px;border:1px solid #DCE2E7;background:#EEF1F4;font-size:13px;"';
+  const td = d => `style="padding:6px 8px;border:1px solid #DCE2E7;vertical-align:top;font-size:13px;${d ? 'text-decoration:line-through;color:#888;' : ''}"`;
+  let html = `<div style="font-family:Calibri,Arial,sans-serif;font-size:14px;color:#222;"><h2 style="font-size:18px;margin:0 0 12px;">Reunión de gerentes — ${esc(lbl)}</h2>`;
+  html += ts.length ? `<table style="border-collapse:collapse;width:100%;"><tr><th ${th}>#</th><th ${th}>Tema</th><th ${th}>Qué planteo / necesito</th><th ${th}>Entregable / acuerdo</th><th ${th}>Horizonte</th></tr>` +
+    ts.map((t, i) => `<tr><td ${td(t.hecho)}>${i + 1}</td><td ${td(t.hecho)}><b>${esc(t.texto || '(sin tema)')}</b>${t.hecho ? ' <i>(tratado)</i>' : ''}</td><td ${td(t.hecho)}>${nl(t.tarea)}</td><td ${td(t.hecho)}>${nl(t.entregable)}</td><td ${td(t.hecho)}>${t.fecha ? esc(fmtPrioFecha(t.fecha)) : ''}${t.responsable ? `<br><span style="display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;background:#E2E9EE;color:#3D5A73;">${esc(t.responsable)}</span>` : ''}<br><span style="display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;border-radius:999px;padding:1px 8px;${PRIO_SEM_STYLE[t.semaforo || 'verde']}">${WK_SEM_LABEL[t.semaforo || 'verde']}</span></td></tr>`).join('') + '</table>'
+    : '<p style="color:#888;">(sin temas cargados)</p>';
+  html += '</div>';
+  const ok = () => showToast('Copiado con formato. Pegalo (Ctrl+V) en mail, Teams u OneNote.');
+  if (navigator.clipboard && window.ClipboardItem){
+    navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], {type:'text/html'}), 'text/plain': new Blob([text], {type:'text/plain'}) })])
+      .then(ok).catch(() => navigator.clipboard.writeText(text).then(ok));
+  } else if (navigator.clipboard){ navigator.clipboard.writeText(text).then(ok); }
 }
 
 // ---- Init ----
