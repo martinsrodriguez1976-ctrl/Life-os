@@ -3,7 +3,7 @@
 {
   "name": "Life Os Martin",
   "schemaVersion": 1,
-  "description": "Foco del día completo: Agenda, Colaboradores, Reunión con Javier, Coach y Actividades (con los mismos datos de trabajo) + pestaña \"Vida personal\" que fusiona el Life OS (áreas de vida, descarga mental, rutina, semana, tareas personales, hábitos, metas, revisión), reutilizando el mismo motor de tareas/subtareas con fechas, edición y archivo de completadas.",
+  "description": "Foco del día completo: Agenda (con Tablero de proyectos editable por pilar), Colaboradores, Reunión con Javier, Coach y Actividades (con los mismos datos de trabajo) + pestaña \"Vida personal\" que fusiona el Life OS (áreas de vida, descarga mental, rutina, semana, tareas personales, hábitos, metas, revisión), reutilizando el mismo motor de tareas/subtareas con fechas, edición y archivo de completadas.",
   "mcpTools": [],
   "mcpServerNames": []
 }
@@ -184,6 +184,44 @@
 
   .agenda-section { margin-bottom: 40px; }
   .agenda-section:last-child { margin-bottom: 0; }
+
+  /* ---- Tablero de proyectos ---- */
+  .tb-kpis { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .tb-kpi { background:#fff; border:1px solid var(--border); border-radius:8px; padding:8px 14px; min-width:110px; }
+  .tb-kpi span { font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-secondary); display:block; }
+  .tb-kpi b { font-size:20px; }
+  .tb-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:#fff; }
+  .tb-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .tb-table th { text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-secondary); padding:8px 8px; border-bottom:1px solid var(--border); background:#fafbfc; white-space:nowrap; }
+  .tb-table td { padding:4px 6px; border-bottom:1px solid #f0f2f4; vertical-align:top; }
+  .tb-cell { min-height:22px; padding:3px 4px; border-radius:4px; outline:none; white-space:pre-wrap; word-break:break-word; min-width:90px; }
+  .tb-cell:hover { background:#f4f6f8; }
+  .tb-cell:focus { background:#fff; box-shadow:0 0 0 2px var(--accent-soft); }
+  .tb-cell:empty:before { content:'—'; color:#c3cad1; }
+  .tb-table select, .tb-table input[type=date] { font:inherit; font-size:12px; border:1px solid transparent; border-radius:10px; padding:2px 6px; background:#eef1f4; cursor:pointer; max-width:190px; }
+  .tb-table select:hover, .tb-table input[type=date]:hover { border-color:var(--border); }
+  .tb-s-red { background:#fee2e2 !important; color:#991b1b; font-weight:600; }
+  .tb-s-amber { background:#fef3c7 !important; color:#92400e; font-weight:600; }
+  .tb-s-green { background:#dcfce7 !important; color:#166534; font-weight:600; }
+  .tb-s-blue { background:#dbeafe !important; color:#1e40af; font-weight:600; }
+  .tb-s-gray { background:#e5e7eb !important; color:#374151; font-weight:600; }
+  .tb-r-decide { background:#1f2933 !important; color:#fff; font-weight:700; border-radius:4px !important; }
+  .tb-r-define { background:#fff !important; color:#1f2933; border:1.5px solid #1f2933 !important; font-weight:700; border-radius:4px !important; }
+  .tb-r-delega { background:#f0f2f4 !important; color:#7b8794; font-weight:700; border-radius:4px !important; }
+  .tb-group td { background:var(--accent); color:#fff; font-weight:600; font-size:13px; padding:7px 10px; }
+  .tb-group td button { float:right; background:rgba(255,255,255,.18); color:#fff; border:none; border-radius:5px; padding:2px 9px; font-size:12px; cursor:pointer; }
+  .tb-g1 td { background:#1e3a8a; } .tb-g2 td { background:#0f766e; } .tb-g3 td { background:#6d28d9; } .tb-g4 td { background:#9a3412; }
+  .tb-del { border:none; background:none; color:#b0b8c1; cursor:pointer; font-size:16px; line-height:1; padding:4px; }
+  .tb-del:hover { color:#991b1b; }
+  .tb-undo { display:none; margin:10px 0; font-size:13px; background:#fff7ed; border:1px solid #fed7aa; border-radius:8px; padding:8px 12px; }
+  .tb-undo button { margin-left:10px; }
+  .tb-cols { display:none; background:#fff; border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:14px; }
+  .tb-colrow { display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
+  .tb-colrow input[type=text] { font:inherit; font-size:13px; padding:5px 8px; border:1px solid var(--border); border-radius:6px; }
+  .tb-colrow .tb-opts { flex:1; min-width:260px; }
+  .tb-colrow select { font:inherit; font-size:13px; padding:5px; border:1px solid var(--border); border-radius:6px; }
+  .tb-table td:first-child .tb-cell { min-width:200px; }
+  .tb-hint { font-size:12px; color:var(--text-secondary); margin:4px 0 10px; }
 
   .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .section-head h2 { font-family: 'Poppins', sans-serif; font-size: 19px; font-weight: 600; margin: 0; }
@@ -1004,6 +1042,25 @@
 
   <!-- AGENDA (tareas + proyectos + métricas, todo en la misma hoja) -->
   <section class="panel active" id="panel-agenda">
+
+    <div class="agenda-section" id="sec-tablero">
+      <div class="section-head">
+        <h2>Tablero de proyectos</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-ghost" onclick="tbToggleCols()">Editar columnas</button>
+          <button class="btn-add" onclick="tbAddRow()">+ Agregar fila</button>
+        </div>
+      </div>
+      <div class="tb-cols" id="tbCols"></div>
+      <div class="tb-kpis" id="tbKpis"></div>
+      <div class="filters">
+        <select id="tbFilterPilar" onchange="renderTablero()"></select>
+        <select id="tbFilterRol" onchange="renderTablero()"></select>
+      </div>
+      <div class="tb-undo" id="tbUndo">Fila eliminada.<button class="btn-ghost" onclick="tbUndo()">Deshacer</button></div>
+      <div class="tb-wrap"><table class="tb-table" id="tbTable"></table></div>
+      <p class="tb-hint">Hacé clic en cualquier celda para editarla. Los cambios se guardan solos.</p>
+    </div>
    <datalist id="agOwnerList"></datalist>
    <div class="agenda-grid">
    <div class="agenda-main">
@@ -1781,6 +1838,198 @@ ensureCoachEntryRecord({
   answer: 'Un poco de ambos. 50% y 50%',
   date: '2026-08-05T15:06:00'
 });
+
+// ---- Tablero de proyectos ----
+function tbSeed(){
+  const PILARES = ['1 · Red y costos','2 · Planificación','3 · Digitalización y visibilidad','4 · Organización'];
+  const ESTADOS = ['En curso','Cotizando','En análisis','En transición','Operando','Go-live esta semana','Por iniciar','Espera DRP','Frenar','En Sistemas, sin novedades','Próx. semana (condicionado)','Bloqueado','Sin política','Decisión pendiente','Revisar alcance','Suspendido','Hecho'];
+  const cols = [
+    { id:'pilar', name:'Pilar', type:'select', options:PILARES },
+    { id:'proyecto', name:'Proyecto', type:'text' },
+    { id:'estado', name:'Estado', type:'select', options:ESTADOS },
+    { id:'depende', name:'Depende de', type:'text' },
+    { id:'paso', name:'Próximo paso', type:'text' },
+    { id:'responsable', name:'Responsable', type:'text' },
+    { id:'fecha', name:'Fecha', type:'date' },
+    { id:'rol', name:'Rol', type:'select', options:['DECIDE','DEFINE','DELEGA'] },
+  ];
+  const P = PILARES;
+  const R = [
+    [P[0],'Arquitectura Logística 2026-2030','En curso','Dirección','Implementar lo definido con Maya','DECIDE'],
+    [P[0],'Cierre transición Llavallol → Córdoba (Dep. 3, iFlow AMBA)','En curso','Producción, iFlow','Desalojo Dep. 3 y estabilizar iFlow','DECIDE'],
+    [P[0],'Segunda visión depósito Córdoba','Espera DRP','DRP por nodo','Volúmenes por nodo','DECIDE'],
+    [P[0],'Supply chain VM + dimensionamiento','Frenar','DRP, eq. proyecto','Dimensionar post DRP','DECIDE'],
+    [P[0],'TSP NOA / Cuyo','Cotizando','DRP por nodo','Recotizar con volumen y mix','DECIDE'],
+    [P[0],'Graneles Graba vs Córdoba','En análisis','Producción','Costo total por origen + movimiento de sebo','DECIDE'],
+    [P[0],'Pallet swap','Sin política','Comercial, transp.','Política + cta. cte. valorizada','DEFINE'],
+    [P[0],'Depósito picking interino','Operando','Equipo','Servicio mín., costo tope, fecha salida','DELEGA'],
+    [P[1],'DRP corporativo / stock por TSP','En curso','Planificación Danica y Córdoba','Primera corrida por nodo','DEFINE'],
+    [P[1],'Previsión de demanda','En curso','Comercial','Medir error de pronóstico','DEFINE'],
+    [P[2],'Maestros de clientes, transportes y artículos','En Sistemas, sin novedades','Sistemas','Fecha comprometida y responsable','DEFINE'],
+    [P[2],'ASA · Graneles + Harina de Carne','Go-live esta semana','Sistemas, planta','1 semana estable sin incidentes críticos','DEFINE'],
+    [P[2],'ASA · Cajas','Próx. semana (condicionado)','Estabilidad etapa 1','Criterio de salida y quién certifica','DEFINE'],
+    [P[2],'QR entregas','Bloqueado','Sistemas (SIMOV)','Disparador sin balanza (Munro, iFlow, Pilar)','DECIDE'],
+    [P[2],'Cuadro tarifario','Suspendido','Maestro transportes, QR','Definir si vive en ASA o en TMS','DECIDE'],
+    [P[2],'Preliquidaciones','Suspendido','Cuadro tarifario','Reglas de auditoría de facturas','DEFINE'],
+    [P[2],'TMS propio (piloto HDC)','Revisar alcance','Decisión preliquidación','Evitar construir dos veces','DECIDE'],
+    [P[2],'Torre de control · OTIF · Indicador de pedidos','En curso','Qlik, datos limpios','Definir KPIs y umbrales de acción','DEFINE'],
+    [P[2],'Reportes recurrentes (cubo, iFlow, costos Danica)','Operando','—','Pasar a equipo o tarea programada','DELEGA'],
+    [P[3],'Reingeniería equipo BUE','Por iniciar','RRHH, Dirección','Mapa de roles actual vs. futuro','DECIDE'],
+    [P[3],'Jefatura de transporte centralizada en Gustavo Laza','En transición','Gustavo, Martín','Armar pilares del puesto','DEFINE'],
+    [P[3],'Nueva persona para gestión de graneles','Por iniciar','RRHH, Dirección','Perfil y búsqueda','DECIDE'],
+    [P[3],'Puesto Martín Kisser','Decisión pendiente','RRHH, Dirección','Desvincular o reasignar','DECIDE'],
+    [P[3],'Seguros red Danica · Encuesta clientes','En curso','Equipo','Asignar dueño y fecha','DELEGA'],
+  ];
+  return { columns: cols, rows: R.map(r => ({ id: cid(), c: { pilar:r[0], proyecto:r[1], estado:r[2], depende:r[3], paso:r[4], responsable:'', fecha:'', rol:r[5] } })) };
+}
+if (!data.tablero) { data.tablero = tbSeed(); }
+
+let tbLastDeleted = null;
+function tbCol(id){ return data.tablero.columns.find(c => c.id === id); }
+function tbStatusClass(v){
+  const x = (v||'').toLowerCase();
+  if (!x) return '';
+  if (/^decide$/.test(x)) return 'tb-r-decide';
+  if (/^define$/.test(x)) return 'tb-r-define';
+  if (/^delega$/.test(x)) return 'tb-r-delega';
+  if (/bloque|sin pol|decisi|revisar|atras|riesgo/.test(x)) return 'tb-s-red';
+  if (/espera|frenar|por iniciar|próx|prox|sin noved|pendiente/.test(x)) return 'tb-s-amber';
+  if (/suspend|cancel/.test(x)) return 'tb-s-gray';
+  if (/operando|go-live|hecho|cerrado|ok/.test(x)) return 'tb-s-green';
+  return 'tb-s-blue';
+}
+function tbPilarIdx(v){ const p = tbCol('pilar'); return p && p.options ? p.options.indexOf(v) : -1; }
+
+function renderTablero(){
+  const tb = data.tablero; if (!tb) return;
+  const cols = tb.columns;
+  // filtros
+  const fp = document.getElementById('tbFilterPilar'), fr = document.getElementById('tbFilterRol');
+  const pv = fp.value || 'todos', rv = fr.value || 'todos';
+  const pc = tbCol('pilar'), rc = tbCol('rol');
+  fp.style.display = pc ? '' : 'none'; fr.style.display = rc ? '' : 'none';
+  fp.innerHTML = '<option value="todos">Todos los pilares</option>' + (pc ? (pc.options||[]).map(o => `<option ${o===pv?'selected':''}>${escapeHtml(o)}</option>`).join('') : '');
+  fr.innerHTML = '<option value="todos">Todos los roles</option>' + (rc ? (rc.options||[]).map(o => `<option ${o===rv?'selected':''}>${escapeHtml(o)}</option>`).join('') : '');
+  const rows = tb.rows.filter(r => (pv==='todos' || r.c.pilar===pv) && (rv==='todos' || r.c.rol===rv));
+  // KPIs
+  const cnt = f => tb.rows.filter(f).length;
+  const k = [['Frentes', tb.rows.length, ''],
+             ['Decide Martín', cnt(r => r.c.rol==='DECIDE'), ''],
+             ['Bloqueados / espera', cnt(r => /tb-s-(red|amber)/.test(tbStatusClass(r.c.estado))), 'color:#991b1b'],
+             ['A delegar', cnt(r => r.c.rol==='DELEGA'), 'color:#7b8794']];
+  document.getElementById('tbKpis').innerHTML = k.map(x => `<div class="tb-kpi"><span>${x[0]}</span><b style="${x[2]}">${x[1]}</b></div>`).join('');
+  // tabla
+  const visCols = pc ? cols.filter(c => c.id !== 'pilar') : cols;
+  let h = '<thead><tr>' + visCols.map(c => `<th>${escapeHtml(c.name)}</th>`).join('') + '<th></th></tr></thead><tbody>';
+  const cell = (r, c) => {
+    const v = r.c[c.id] || '';
+    if (c.type === 'select') {
+      const opts = (c.options||[]).slice(); if (v && !opts.includes(v)) opts.unshift(v);
+      return `<select class="${tbStatusClass(v)}" onchange="tbSet('${r.id}','${c.id}',this.value)"><option value=""></option>${opts.map(o => `<option ${o===v?'selected':''}>${escapeHtml(o)}</option>`).join('')}</select>`;
+    }
+    if (c.type === 'date') return `<input type="date" value="${escapeHtml(v)}" onchange="tbSet('${r.id}','${c.id}',this.value)">`;
+    return `<div class="tb-cell" contenteditable="true" onblur="tbSet('${r.id}','${c.id}',this.innerText.trim(),true)">${escapeHtml(v)}</div>`;
+  };
+  const rowHtml = r => '<tr>' + visCols.map(c => `<td>${cell(r,c)}</td>`).join('') + `<td><button class="tb-del" title="Eliminar fila" onclick="tbDelRow('${r.id}')">×</button></td></tr>`;
+  if (pc) {
+    const groups = (pc.options||[]).slice();
+    rows.forEach(r => { if (!groups.includes(r.c.pilar||'')) groups.push(r.c.pilar||''); });
+    groups.forEach((g, i) => {
+      const gr = rows.filter(r => (r.c.pilar||'') === g);
+      if (!gr.length && pv !== 'todos' && pv !== g) return;
+      if (!gr.length && !g) return;
+      h += `<tr class="tb-group tb-g${i+1}"><td colspan="${visCols.length+1}">${escapeHtml(g || 'Sin pilar')}<button onclick="tbAddRow(${JSON.stringify(g).replace(/"/g,'&quot;')})">+ fila</button></td></tr>`;
+      h += gr.map(rowHtml).join('');
+    });
+  } else {
+    h += rows.map(rowHtml).join('');
+  }
+  h += '</tbody>';
+  document.getElementById('tbTable').innerHTML = h;
+}
+function tbSet(rowId, colId, val, isText){
+  const r = data.tablero.rows.find(x => x.id === rowId); if (!r) return;
+  if ((r.c[colId]||'') === val) return;
+  r.c[colId] = val;
+  save();
+  if (!isText) renderTablero(); // en texto no se re-renderiza para no perder el foco
+
+}
+function tbAddRow(pilar){
+  const r = { id: cid(), c: {} };
+  data.tablero.columns.forEach(c => r.c[c.id] = '');
+  const fp = document.getElementById('tbFilterPilar').value;
+  if (pilar !== undefined) r.c.pilar = pilar; else if (fp && fp !== 'todos') r.c.pilar = fp;
+  else { const pc = tbCol('pilar'); if (pc && pc.options && pc.options.length) r.c.pilar = pc.options[0]; }
+  r.c.proyecto = 'Nuevo proyecto';
+  // insertar después de la última fila del mismo pilar
+  let idx = -1; data.tablero.rows.forEach((x,i) => { if (x.c.pilar === r.c.pilar) idx = i; });
+  if (idx >= 0) data.tablero.rows.splice(idx+1, 0, r); else data.tablero.rows.push(r);
+  save(); renderTablero();
+  
+}
+function tbDelRow(id){
+  const i = data.tablero.rows.findIndex(x => x.id === id); if (i < 0) return;
+  tbLastDeleted = { row: data.tablero.rows[i], idx: i };
+  data.tablero.rows.splice(i, 1);
+  save(); renderTablero();
+  const u = document.getElementById('tbUndo'); u.style.display = 'block';
+  clearTimeout(tbDelRow._t); tbDelRow._t = setTimeout(() => { u.style.display = 'none'; }, 8000);
+}
+function tbUndo(){
+  if (!tbLastDeleted) return;
+  data.tablero.rows.splice(tbLastDeleted.idx, 0, tbLastDeleted.row);
+  tbLastDeleted = null; document.getElementById('tbUndo').style.display = 'none';
+  save(); renderTablero();
+}
+// ---- Editor de columnas ----
+function tbToggleCols(){
+  const el = document.getElementById('tbCols');
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  renderTbCols();
+}
+function renderTbCols(){
+  const el = document.getElementById('tbCols'); if (el.style.display !== 'block') return;
+  const cols = data.tablero.columns;
+  el.innerHTML = '<p class="tb-hint">Renombrá, cambiá el tipo, reordená o eliminá columnas. En las de tipo lista, escribí las opciones separadas por coma. La columna "Pilar" agrupa las filas y la columna "Rol" alimenta los indicadores.</p>' +
+    cols.map((c, i) => `<div class="tb-colrow">
+      <input type="text" value="${escapeHtml(c.name)}" onchange="tbColSet(${i},'name',this.value)" style="width:150px">
+      <select onchange="tbColSet(${i},'type',this.value)">
+        <option value="text" ${c.type==='text'?'selected':''}>Texto</option>
+        <option value="select" ${c.type==='select'?'selected':''}>Lista</option>
+        <option value="date" ${c.type==='date'?'selected':''}>Fecha</option>
+      </select>
+      ${c.type==='select' ? `<input type="text" class="tb-opts" value="${escapeHtml((c.options||[]).join(', '))}" onchange="tbColSet(${i},'options',this.value)">` : '<span style="flex:1"></span>'}
+      <button class="btn-ghost" onclick="tbColMove(${i},-1)" ${i===0?'disabled':''}>↑</button>
+      <button class="btn-ghost" onclick="tbColMove(${i},1)" ${i===cols.length-1?'disabled':''}>↓</button>
+      <button class="tb-del" title="Eliminar columna" onclick="tbColDel(${i})">×</button>
+    </div>`).join('') +
+    '<button class="btn-add" onclick="tbColAdd()">+ Agregar columna</button>';
+}
+function tbColSet(i, k, v){
+  const c = data.tablero.columns[i];
+  if (k === 'options') c.options = v.split(',').map(x => x.trim()).filter(Boolean);
+  else if (k === 'type') { c.type = v; if (v === 'select' && !c.options) c.options = []; }
+  else c[k] = v.trim() || c[k];
+  save(); renderTbCols(); renderTablero();
+}
+function tbColMove(i, d){
+  const a = data.tablero.columns, j = i + d; if (j < 0 || j >= a.length) return;
+  [a[i], a[j]] = [a[j], a[i]]; save(); renderTbCols(); renderTablero();
+}
+function tbColDel(i){
+  const c = data.tablero.columns[i];
+  const rowEl = document.querySelectorAll('#tbCols .tb-colrow')[i];
+  const btns = rowEl && rowEl.querySelector('.tb-del');
+  if (btns && !btns.dataset.armed) { btns.dataset.armed = '1'; btns.textContent = '¿Eliminar?'; btns.style.color = '#991b1b'; btns.style.fontSize = '12px'; return; }
+  data.tablero.columns.splice(i, 1);
+  data.tablero.rows.forEach(r => delete r.c[c.id]);
+  save(); renderTbCols(); renderTablero();
+}
+function tbColAdd(){
+  data.tablero.columns.push({ id: 'col_' + cid(), name: 'Nueva columna', type: 'text' });
+  save(); renderTbCols(); renderTablero();
+}
 
 save();
 
@@ -5567,6 +5816,7 @@ populateTaskProjSelects();
 renderProjects();
 renderTasks();
 renderMetrics();
+renderTablero();
 renderIndicadores();
 renderFocus();
 selectedCollabId = data.collaborators.length ? data.collaborators[0].id : null;
