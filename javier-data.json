@@ -1,7 +1,7 @@
 {
   "weekKey": "2026-11-23",
   "weekLabel": "Semana 48",
-  "publishedAt": "2026-11-24T12:47:52.123Z",
+  "publishedAt": "2026-11-26T11:20:36.606Z",
   "prioridades": [
     {
       "id": "id_avlnofyq",
@@ -45,17 +45,29 @@
   "riesgos": [
     {
       "id": "id_hsale9da",
-      "semaforo": "verde",
+      "semaforo": "rojo",
       "avance": "Desarrollos de Qlik",
       "estado": "• Demoras desarrollo de DRP y bases para segmentación de clientes.  (Aplica a prioridades 2,3 y 4)"
+    },
+    {
+      "id": "id_ztwjki3l",
+      "semaforo": "verde",
+      "avance": "Inventario Cubo",
+      "estado": "• Planificando para parada de envases"
     }
   ],
   "necesito": [
     {
       "id": "id_bwvgnthf",
-      "semaforo": "verde",
+      "semaforo": "amarillo",
       "avance": "Incorporacion de Muller",
       "estado": "• Acelerar proceso. "
+    },
+    {
+      "id": "id_9rxyjfc8",
+      "semaforo": "amarillo",
+      "avance": "Cargas YPF",
+      "estado": "• Revisemos la decisión. "
     }
   ],
   "avances": [
