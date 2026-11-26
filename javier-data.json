@@ -1,7 +1,7 @@
 {
   "weekKey": "2026-11-23",
   "weekLabel": "Semana 48",
-  "publishedAt": "2026-11-26T11:20:36.606Z",
+  "publishedAt": "2026-11-26T11:29:50.270Z",
   "prioridades": [
     {
       "id": "id_avlnofyq",
@@ -71,6 +71,12 @@
     }
   ],
   "avances": [
+    {
+      "id": "id_zc3n56mr",
+      "semaforo": "verde",
+      "avance": "Siniestro Levaduras Chile",
+      "estado": "• No va a ser viable. \n• Camión detenido solo 6 hs por rotura. \n• Seguros no aptos para riesgos en cruce. \n• Quedamos con CD, ayudarla a buscar despachante nuevo"
+    },
     {
       "id": "id_5k7stenm",
       "semaforo": "amarillo",
